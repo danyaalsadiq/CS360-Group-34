@@ -13,6 +13,6 @@ const availabilitySchema = new mongoose.Schema({
 });
 
 // Indexing therapistId and date for faster queries
-availabilitySchema.index({ therapistId: 1, date: 1 });
+// availabilitySchema.index({ therapistId: 1, date: 1 });
 
 module.exports = mongoose.model('Availability', availabilitySchema);
