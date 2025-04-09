@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Italiana } from "next/font/google"
 import { UserProvider } from "@/components/user-context"
-import { SignOutButton } from "@/components/sign-out-button"
+import { LogoutButton } from "@/components/logout-button"
 import "./globals.css"
 
 const italiana = Italiana({
@@ -27,7 +27,7 @@ export default function RootLayout({
         <UserProvider>
           <div className="min-h-screen">
             <div className="absolute top-4 right-4 z-10">
-              <SignOutButton />
+              <LogoutButton />
             </div>
             {children}
           </div>
