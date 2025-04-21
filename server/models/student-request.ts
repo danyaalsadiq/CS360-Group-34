@@ -1,36 +1,45 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import { Schema, model, Document } from 'mongoose';
 
 export interface IStudentRequest extends Document {
   student_id: string;
   student_name: string;
-  preferred_therapist_id: string;
-  preferred_therapist_name: string;
-  preferred_day: string;
-  preferred_date: Date;
-  preferred_slot_time: string;
-  status: string; // pending, scheduled, rescheduled, rejected
+  preferred_days: string[];
+  preferred_times: string[];
+  preferred_therapist_id?: string;
+  status: 'pending' | 'waiting' | 'approved' | 'assigned' | 'rejected';
   assigned_slot_id?: string;
+  requested_date?: string;  // For specific date requests
+  requested_time?: string;  // For specific time requests
+  waiting_for_therapist?: boolean; // For students waiting for therapist to mark a slot
+  notes?: string;
   created_at: Date;
   updated_at: Date;
 }
 
-const studentRequestSchema = new Schema<IStudentRequest>({
-  student_id: { type: String, required: true },
-  student_name: { type: String, required: true },
-  preferred_therapist_id: { type: String, required: true },
-  preferred_therapist_name: { type: String, required: true },
-  preferred_day: { type: String, required: true },
-  preferred_date: { type: Date, required: true },
-  preferred_slot_time: { type: String, required: true },
-  status: { 
-    type: String, 
-    required: true, 
-    enum: ['pending', 'scheduled', 'rescheduled', 'rejected'],
-    default: 'pending'
-  },
-  assigned_slot_id: { type: String },
-  created_at: { type: Date, default: Date.now },
-  updated_at: { type: Date, default: Date.now }
-}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+const studentRequestSchema = new Schema<IStudentRequest>(
+  {
+    student_id: { type: String, required: true },
+    student_name: { type: String, required: true },
+    preferred_days: [{ type: String, required: true }],
+    preferred_times: [{ type: String, required: true }],
+    preferred_therapist_id: { type: String },
+    status: { 
+      type: String, 
+      enum: ['pending', 'waiting', 'approved', 'assigned', 'rejected'], 
+      default: 'pending'
+    },
+    assigned_slot_id: { type: String },
+    requested_date: { type: String }, // Specific date for waiting list
+    requested_time: { type: String }, // Specific time for waiting list
+    waiting_for_therapist: { type: Boolean, default: false },
+    notes: { type: String }
+  }, 
+  { 
+    timestamps: { 
+      createdAt: 'created_at', 
+      updatedAt: 'updated_at' 
+    } 
+  }
+);
 
-export const StudentRequestModel = mongoose.model<IStudentRequest>('StudentRequest', studentRequestSchema);
+export const StudentRequestModel = model<IStudentRequest>('StudentRequest', studentRequestSchema);

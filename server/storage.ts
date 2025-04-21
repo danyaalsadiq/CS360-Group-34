@@ -19,6 +19,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
   listUsers(role?: string): Promise<User[]>;
 
   // Appointment operations
@@ -167,6 +168,11 @@ export class MemStorage implements IStorage {
       return allUsers.filter(user => user.role === role);
     }
     return allUsers;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    if (!this.users.has(id)) return false;
+    return this.users.delete(id);
   }
 
   // Appointment operations

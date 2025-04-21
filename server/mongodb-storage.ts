@@ -80,8 +80,15 @@ function toForumPost(doc: IForumPost & { _id: any }): ForumPost {
     title: doc.title,
     content: doc.content,
     userId: doc.userId,
+    userName: doc.userName,
     category: doc.category,
-    createdAt: doc.createdAt
+    likes: doc.likes || [],
+    isReported: doc.isReported || false,
+    reportReason: doc.reportReason,
+    reportedBy: doc.reportedBy,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    isDeleted: doc.isDeleted || false
   };
 }
 
@@ -91,7 +98,14 @@ function toForumComment(doc: IForumComment & { _id: any }): ForumComment {
     postId: doc.postId,
     content: doc.content,
     userId: doc.userId,
-    createdAt: doc.createdAt
+    userName: doc.userName,
+    likes: doc.likes || [],
+    isReported: doc.isReported || false,
+    reportReason: doc.reportReason,
+    reportedBy: doc.reportedBy,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    isDeleted: doc.isDeleted || false
   };
 }
 
@@ -153,7 +167,7 @@ export class MongoDBStorage implements IStorage {
       
       await this.createUser({
         username: "admin",
-        password: "password",
+        password: "admin1",
         name: "Admin User",
         email: "admin@example.com",
         role: "admin"
@@ -213,6 +227,16 @@ export class MongoDBStorage implements IStorage {
     } catch (error) {
       console.error("Error listing users:", error);
       return [];
+    }
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    try {
+      const result = await UserModel.findByIdAndDelete(id);
+      return result !== null;
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      return false;
     }
   }
 
@@ -386,11 +410,93 @@ export class MongoDBStorage implements IStorage {
 
   async listForumPosts(): Promise<ForumPost[]> {
     try {
-      const posts = await ForumPostModel.find().sort({ createdAt: -1 });
+      const posts = await ForumPostModel.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
       return posts.map(post => toForumPost(post));
     } catch (error) {
       console.error("Error listing forum posts:", error);
       return [];
+    }
+  }
+  
+  async listForumPostsByCategory(category: string): Promise<ForumPost[]> {
+    try {
+      const posts = await ForumPostModel.find({ 
+        category, 
+        isDeleted: { $ne: true } 
+      }).sort({ createdAt: -1 });
+      return posts.map(post => toForumPost(post));
+    } catch (error) {
+      console.error("Error listing forum posts by category:", error);
+      return [];
+    }
+  }
+  
+  async updateForumPost(id: string, postData: Partial<ForumPost>): Promise<ForumPost | undefined> {
+    try {
+      const updatedPost = await ForumPostModel.findByIdAndUpdate(
+        id, 
+        { ...postData, updatedAt: new Date() }, 
+        { new: true }
+      );
+      return updatedPost ? toForumPost(updatedPost) : undefined;
+    } catch (error) {
+      console.error("Error updating forum post:", error);
+      return undefined;
+    }
+  }
+  
+  async deleteForumPost(id: string): Promise<boolean> {
+    try {
+      // Soft delete by setting isDeleted flag
+      await ForumPostModel.findByIdAndUpdate(id, { 
+        isDeleted: true, 
+        updatedAt: new Date() 
+      });
+      return true;
+    } catch (error) {
+      console.error("Error deleting forum post:", error);
+      return false;
+    }
+  }
+  
+  async likeForumPost(postId: string, userId: string): Promise<ForumPost | undefined> {
+    try {
+      const post = await ForumPostModel.findById(postId);
+      if (!post) return undefined;
+      
+      // If user already liked, remove like (toggle)
+      if (post.likes && post.likes.includes(userId)) {
+        post.likes = post.likes.filter(id => id !== userId);
+      } else {
+        // Add like
+        if (!post.likes) post.likes = [];
+        post.likes.push(userId);
+      }
+      
+      post.updatedAt = new Date();
+      await post.save();
+      return toForumPost(post);
+    } catch (error) {
+      console.error("Error liking forum post:", error);
+      return undefined;
+    }
+  }
+  
+  async reportForumPost(postId: string, userId: string, reason: string): Promise<ForumPost | undefined> {
+    try {
+      const post = await ForumPostModel.findById(postId);
+      if (!post) return undefined;
+      
+      post.isReported = true;
+      post.reportReason = reason;
+      post.reportedBy = userId;
+      post.updatedAt = new Date();
+      
+      await post.save();
+      return toForumPost(post);
+    } catch (error) {
+      console.error("Error reporting forum post:", error);
+      return undefined;
     }
   }
 

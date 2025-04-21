@@ -3,8 +3,11 @@ import OpenAI from "openai";
 
 // Initialize OpenAI client with Groq API key
 // Using OpenAI client with Groq API key and base URL
+const apiKey = process.env.GROQ_API_KEY || "";
+console.log("API Key available:", !!apiKey); // Log if API key is available without exposing it
+
 const openai = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY || "",
+  apiKey: apiKey,
   baseURL: "https://api.groq.com/openai/v1",
 });
 
@@ -17,12 +20,14 @@ export async function generateAIResponse(options: GenerateAIResponseOptions): Pr
   const { userMessage, context = '' } = options;
   
   // If GROQ_API_KEY is not available, use the fallback responses
-  if (!process.env.GROQ_API_KEY) {
-    console.warn("GROQ_API_KEY is not set, using fallback responses");
+  if (!apiKey) {
+    console.warn("GROQ_API_KEY is not set or empty, using fallback responses");
     return simulateFallbackResponse(userMessage);
   }
   
   try {
+    console.log("Generating AI response for message:", userMessage.substring(0, 20) + "...");
+    
     // System message to set the AI's behavior and purpose
     const systemMessage = `You are a helpful website navigation assistant for a university counseling service platform. 
     Your goal is to help users navigate the website and find the features they need. 
@@ -36,6 +41,7 @@ export async function generateAIResponse(options: GenerateAIResponseOptions): Pr
     ${context ? `Additional context: ${context}` : ''}`;
     
     // Make the API call to Groq (via OpenAI client)
+    console.log("Calling Groq API with model: llama3-8b-8192");
     const chatCompletion = await openai.chat.completions.create({
       messages: [
         {
@@ -53,11 +59,14 @@ export async function generateAIResponse(options: GenerateAIResponseOptions): Pr
       top_p: 0.95,
     });
 
+    console.log("Received AI response successfully");
     // Return the AI response
     return chatCompletion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again later.";
   } catch (error) {
     console.error("Error generating AI response:", error);
-    return "I'm having trouble processing your request right now. Please try again in a moment, or speak with a counselor directly if you need immediate assistance.";
+    // Fall back to simulated responses in case of API errors
+    console.log("Using fallback response due to API error");
+    return simulateFallbackResponse(userMessage);
   }
 }
 

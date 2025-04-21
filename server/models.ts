@@ -93,32 +93,60 @@ const goalSchema = new Schema<IGoal>({
 interface IForumPost extends Document {
   title: string;
   content: string;
-  userId?: number;
+  userId: string; // Changed to string for MongoDB compatibility
+  userName?: string; // Added to store the username for display purposes
   category: string;
+  likes: string[]; // Array of user IDs who liked the post
+  isReported: boolean;
+  reportReason?: string;
+  reportedBy?: string;
   createdAt: Date;
+  updatedAt?: Date;
+  isDeleted: boolean;
 }
 
 const forumPostSchema = new Schema<IForumPost>({
   title: { type: String, required: true },
   content: { type: String, required: true },
-  userId: { type: Number },
+  userId: { type: String, required: true },
+  userName: { type: String },
   category: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
+  likes: [{ type: String }], // Array of user IDs
+  isReported: { type: Boolean, default: false },
+  reportReason: { type: String },
+  reportedBy: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date },
+  isDeleted: { type: Boolean, default: false }
 });
 
 // Forum Comment Schema
 interface IForumComment extends Document {
-  postId: number;
+  postId: string; // Changed to string for MongoDB compatibility
   content: string;
-  userId?: number;
+  userId: string; // Changed to string for MongoDB compatibility
+  userName?: string; // Added to store the username for display purposes
+  likes: string[]; // Array of user IDs who liked the comment
+  isReported: boolean;
+  reportReason?: string;
+  reportedBy?: string;
   createdAt: Date;
+  updatedAt?: Date;
+  isDeleted: boolean;
 }
 
 const forumCommentSchema = new Schema<IForumComment>({
-  postId: { type: Number, required: true },
+  postId: { type: String, required: true },
   content: { type: String, required: true },
-  userId: { type: Number },
-  createdAt: { type: Date, default: Date.now }
+  userId: { type: String, required: true },
+  userName: { type: String },
+  likes: [{ type: String }], // Array of user IDs
+  isReported: { type: Boolean, default: false },
+  reportReason: { type: String },
+  reportedBy: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date },
+  isDeleted: { type: Boolean, default: false }
 });
 
 // Chat Message Schema

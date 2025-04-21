@@ -236,9 +236,16 @@ export type ForumPost = {
   id: string;
   title: string;
   content: string;
-  userId?: string;
+  userId: string;
+  userName?: string;
   category: string;
+  likes: string[];
+  isReported: boolean;
+  reportReason?: string;
+  reportedBy?: string;
   createdAt: Date;
+  updatedAt?: Date;
+  isDeleted: boolean;
 };
 export type InsertForumPost = z.infer<typeof insertForumPostSchema>;
 
@@ -246,8 +253,15 @@ export type ForumComment = {
   id: string;
   postId: string;
   content: string;
-  userId?: string;
+  userId: string;
+  userName?: string;
+  likes: string[];
+  isReported: boolean;
+  reportReason?: string;
+  reportedBy?: string;
   createdAt: Date;
+  updatedAt?: Date;
+  isDeleted: boolean;
 };
 export type InsertForumComment = z.infer<typeof insertForumCommentSchema>;
 
