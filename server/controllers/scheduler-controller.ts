@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { SchedulerService } from '../services/scheduler-service';
+import { SchedulerService } from '../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/services/scheduler-service';
 
 export class SchedulerController {
   private schedulerService: SchedulerService;

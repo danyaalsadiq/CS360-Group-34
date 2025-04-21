@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { TherapistSubmissionService } from '../services/therapist-submission-service';
+import { TherapistSubmissionService } from '../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/services/therapist-submission-service';
 
 export class TherapistSubmissionController {
   private therapistSubmissionService: TherapistSubmissionService;

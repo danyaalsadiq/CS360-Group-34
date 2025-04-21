@@ -332,26 +332,49 @@ export function AdminDashboard() {
         <h2 className="text-lg font-medium text-neutral-900 dark:text-white mb-4">
           System Management
         </h2>
-        <Card>
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg leading-6 font-medium text-neutral-900 dark:text-white">
-                  System Settings
-                </h3>
-                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                  Manage application settings, user access, and system configuration.
-                </p>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg leading-6 font-medium text-neutral-900 dark:text-white">
+                    User Management
+                  </h3>
+                  <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    Manage users, add new therapists and students, modify user information.
+                  </p>
+                </div>
+                <Link href="/admin">
+                  <Button variant="outline" className="flex items-center">
+                    <Users className="mr-2 h-5 w-5" />
+                    Manage Users
+                  </Button>
+                </Link>
               </div>
-              <Link href="/settings">
-                <Button variant="outline" className="flex items-center">
-                  <Settings className="mr-2 h-5 w-5" />
-                  Configure
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg leading-6 font-medium text-neutral-900 dark:text-white">
+                    System Settings
+                  </h3>
+                  <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    Manage application settings, user access, and system configuration.
+                  </p>
+                </div>
+                <Link href="/settings">
+                  <Button variant="outline" className="flex items-center">
+                    <Settings className="mr-2 h-5 w-5" />
+                    Configure
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

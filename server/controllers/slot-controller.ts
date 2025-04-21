@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { SlotModel } from '../models/slot';
-import { UserModel } from '../models';
+import { SlotModel } from '../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/models/slot';
+import { UserModel } from '../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/models';
 import { format, parse, isAfter, isBefore, addDays } from 'date-fns';
 
 // Get slots for a date range

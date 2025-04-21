@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CancellationService } from '../services/cancellation-service';
+import { CancellationService } from '../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/services/cancellation-service';
 
 export class CancellationController {
   private cancellationService: CancellationService;

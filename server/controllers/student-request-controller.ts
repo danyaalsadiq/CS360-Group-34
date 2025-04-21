@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { StudentRequestService } from '../services/student-request-service';
+import { StudentRequestService } from '../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/services/student-request-service';
 
 export class StudentRequestController {
   private studentRequestService: StudentRequestService;

@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { SlotModel, ISlot } from '../models/slot';
-import { TherapistSubmissionModel } from '../models/therapist-submission';
-import { StudentRequestModel } from '../models/student-request';
-import { UserModel } from '../models';
+import { SlotModel, ISlot } from '../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/models/slot';
+import { TherapistSubmissionModel } from '../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/models/therapist-submission';
+import { StudentRequestModel } from '../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/models/student-request';
+import { UserModel } from '../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/models';
 
 // Utility function to check if a slot overlaps with existing slots
 const checkSlotOverlap = async (date: string, startTime: string, endTime: string, therapistId: string) => {
@@ -275,7 +275,7 @@ export const markAvailability = async (req: Request, res: Response) => {
       
       // Try to get the therapist's name
       try {
-        const therapist = await import('../models').then(models => models.UserModel.findById(therapist_id));
+        const therapist = await import('../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/models').then(models => models.UserModel.findById(therapist_id));
         if (therapist) {
           therapistName = therapist.name;
         } else {
@@ -463,7 +463,7 @@ export const requestAppointment = async (req: Request, res: Response) => {
       
       // Try to get the student's name
       try {
-        const student = await import('../models').then(models => models.UserModel.findById(student_id));
+        const student = await import('../../../../../../../../Muizz/Semester 6/Software Engineering/CAPS (2)/CAPS/server/models').then(models => models.UserModel.findById(student_id));
         if (student) {
           studentName = student.name;
         } else {
