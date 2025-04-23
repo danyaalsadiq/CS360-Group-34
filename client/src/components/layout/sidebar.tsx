@@ -307,7 +307,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
                 <NavItem 
                   href="/forums" 
                   icon={<Users />} 
-                  label="Forums Moderation" 
+                  label="Forums" 
                   active={location.includes("/forums")} 
                   onClick={closeMenuOnMobile}
                 />

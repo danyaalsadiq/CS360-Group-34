@@ -8,11 +8,34 @@ import { ForumModeration } from '@/components/admin/forum-moderation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useAuth } from '@/hooks/use-auth';
+import { useQuery } from '@tanstack/react-query';
+import { Badge } from '@/components/ui/badge';
 
 const AdminPage = () => {
   const { user, isLoading } = useAuth();
   const [_, navigate] = useLocation();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  
+  // Fetch reported forum posts
+  const { 
+    data: reportedPosts = []
+  } = useQuery<any[]>({
+    queryKey: ["/api/admin/forum/reported"],
+    retry: 1,
+    enabled: user?.role === 'admin'
+  });
+  
+  // Fetch reported comments
+  const { 
+    data: reportedComments = []
+  } = useQuery<any[]>({
+    queryKey: ["/api/admin/forum/reported-comments"],
+    retry: 1,
+    enabled: user?.role === 'admin'
+  });
+
+  // Calculate total reports count
+  const totalReportCount = (reportedPosts?.length || 0) + (reportedComments?.length || 0);
 
   const handleOptionClick = (option: string) => {
     setSelectedOption(option);
@@ -127,8 +150,13 @@ const AdminPage = () => {
                   <CardDescription className="text-sm text-muted-foreground">
                     Review reported content, moderate discussions, and manage forum
                   </CardDescription>
-                  <Button variant="default" className="w-full mt-4" onClick={() => handleOptionClick('forum-moderation')}>
+                  <Button variant="default" className="w-full mt-4 relative" onClick={() => handleOptionClick('forum-moderation')}>
                     Moderate Forums
+                    {totalReportCount > 0 && (
+                      <Badge variant="destructive" className="ml-2 absolute -top-2 -right-2 px-2 py-1 text-xs">
+                        {totalReportCount}
+                      </Badge>
+                    )}
                   </Button>
                 </CardContent>
               </Card>

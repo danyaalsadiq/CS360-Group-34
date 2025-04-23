@@ -144,8 +144,8 @@ export function ForumModeration() {
   
   // Delete comment mutation
   const deleteCommentMutation = useMutation({
-    mutationFn: async (commentId: string) => {
-      return apiRequest("DELETE", `/api/forum/comments/${commentId}`);
+    mutationFn: async ({ commentId, reason }: { commentId: string; reason?: string }) => {
+      return apiRequest("DELETE", `/api/forum/comments/${commentId}?reason=${encodeURIComponent(reason || "")}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/forum/reported-comments"] });
@@ -223,7 +223,10 @@ export function ForumModeration() {
       }
     } else if (selectedTab === "comments" && selectedComment) {
       if (adminAction === "delete") {
-        deleteCommentMutation.mutate(selectedComment.id);
+        deleteCommentMutation.mutate({
+          commentId: selectedComment.id,
+          reason: adminActionNote
+        });
       } else if (adminAction === "approve") {
         approveCommentMutation.mutate(selectedComment.id);
       }
@@ -242,10 +245,20 @@ export function ForumModeration() {
           <TabsTrigger value="posts" className="flex items-center">
             <LayoutList className="mr-2 h-4 w-4" />
             Reported Posts
+            {reportedPosts.length > 0 && (
+              <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                {reportedPosts.length}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="comments" className="flex items-center">
             <MessagesSquare className="mr-2 h-4 w-4" />
             Reported Comments
+            {reportedComments.length > 0 && (
+              <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                {reportedComments.length}
+              </span>
+            )}
           </TabsTrigger>
         </TabsList>
         

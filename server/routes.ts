@@ -702,6 +702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/forum/comments/:id", isAuthenticated, async (req, res) => {
     try {
       const commentId = req.params.id;
+      const deleteReason = req.query.reason?.toString() || "";
       
       // Find the comment
       const comment = await ForumCommentModel.findById(commentId);
@@ -715,8 +716,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Unauthorized to delete this comment" });
       }
       
-      // Delete the comment
-      await ForumCommentModel.findByIdAndDelete(commentId);
+      // Mark the comment as deleted rather than actually deleting it
+      comment.isDeleted = true;
+      comment.content = "[deleted]" + (deleteReason ? ` - ${deleteReason}` : "");
+      comment.updatedAt = new Date();
+      
+      // Save the updated comment
+      await comment.save();
       
       res.status(200).json({ message: "Comment deleted successfully" });
     } catch (error) {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -480,7 +480,7 @@ export function ForumList() {
                     </span>
                   )}
                   
-                  {(user?.role === "admin" || (post.user && user && post.user.id === user.id)) && (
+                  {(user?.role === "admin" || (post.user && user && post.user.id.toString() === user.id.toString())) && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -714,23 +714,52 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
   const { toast } = useToast();
   const [comments, setComments] = useState<ExtendedForumComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [commentToReport, setCommentToReport] = useState<ExtendedForumComment | null>(null);
+  const [reportReason, setReportReason] = useState("");
   
   // Fetch comments for this post
   const { refetch } = useQuery<ExtendedForumComment[]>({
     queryKey: ["/api/forum/posts", postId, "comments"],
+    queryFn: async () => {
+      const response = await fetch(`/api/forum/posts/${postId}/comments`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch comments');
+      }
+      return response.json();
+    },
     staleTime: 0,
     refetchInterval: 5000, // Refetch every 5 seconds
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    retry: 3,
-    onSuccess: (data) => {
-      setComments(data || []);
-      setIsLoading(false);
-    },
-    onError: () => {
-      setIsLoading(false);
-    }
+    retry: 3
   });
+  
+  // Handle data changes with useEffect instead of query callbacks
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`/api/forum/posts/${postId}/comments`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch comments');
+        }
+        const data = await response.json();
+        console.log("Comments loaded successfully:", data);
+        setComments(data || []);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error loading comments:", error);
+        setIsLoading(false);
+        toast({
+          title: "Error loading comments",
+          description: "There was a problem loading comments. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    fetchData();
+  }, [postId, toast]);
   
   // Like comment mutation with optimistic updates
   const likeCommentMutation = useMutation({
@@ -833,10 +862,55 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
     likeCommentMutation.mutate(commentId);
   };
   
+  // Report comment mutation
+  const reportCommentMutation = useMutation({
+    mutationFn: async ({ commentId, reason }: { commentId: string; reason: string }) => {
+      return apiRequest("POST", `/api/forum/comments/${commentId}/report`, { reason });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/forum/posts", postId, "comments"] });
+      setIsReportModalOpen(false);
+      setCommentToReport(null);
+      setReportReason("");
+      toast({
+        title: "Comment reported",
+        description: "Thank you for reporting this content. Admins will review it shortly.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to report comment",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleDeleteComment = (commentId: string) => {
     if (window.confirm("Are you sure you want to delete this comment? This action cannot be undone.")) {
       deleteCommentMutation.mutate(commentId);
     }
+  };
+  
+  const handleReportComment = (comment: ExtendedForumComment) => {
+    setCommentToReport(comment);
+    setIsReportModalOpen(true);
+  };
+  
+  const submitCommentReport = () => {
+    if (!commentToReport || !reportReason.trim()) {
+      toast({
+        title: "Unable to submit report",
+        description: "Please provide a reason for reporting this content.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    reportCommentMutation.mutate({
+      commentId: commentToReport.id,
+      reason: reportReason
+    });
   };
   
   return (
@@ -900,7 +974,16 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
                           <span className="text-xs">{comment.likes?.length || 0}</span>
                         </Button>
                         
-                        {(user?.role === "admin" || (comment.user && user && comment.user.id === user.id)) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleReportComment(comment)}
+                          className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                        >
+                          <Flag className="h-3.5 w-3.5" />
+                        </Button>
+                        
+                        {(user?.role === "admin" || (comment.user && user && comment.user.id.toString() === user.id.toString())) && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -942,6 +1025,15 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
                         >
                           <Heart className={`h-3.5 w-3.5 mr-1 ${comment.hasLiked ? "fill-primary" : ""}`} />
                           <span className="text-xs">{comment.likes?.length || 0}</span>
+                        </Button>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleReportComment(comment)}
+                          className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                        >
+                          <Flag className="h-3.5 w-3.5" />
                         </Button>
                         
                         {user?.role === "admin" && (
@@ -1017,6 +1109,44 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
           />
         </form>
       </Form>
+      
+      {/* Report Comment Modal */}
+      <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Report Comment</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for reporting this comment. This will be reviewed by administrators.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="bg-muted p-3 rounded-lg">
+              <p className="text-sm font-medium mb-1">Comment content:</p>
+              <p className="text-sm">{commentToReport?.content}</p>
+            </div>
+            
+            <Textarea
+              placeholder="Reason for reporting..."
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="w-full min-h-[100px]"
+            />
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsReportModalOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={submitCommentReport}
+              disabled={!reportReason.trim()}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Report Comment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
