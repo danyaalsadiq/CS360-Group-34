@@ -106,15 +106,18 @@ export function ForumList() {
   
   // Fetch forum posts
   const { 
-    data: posts = [], 
+    data: allPosts = [], 
     isLoading: isLoadingPosts,
     refetch: refetchPosts
   } = useQuery<ExtendedForumPost[]>({
-    queryKey: categoryFilter 
-      ? ["/api/forum/posts", { category: categoryFilter }] 
-      : ["/api/forum/posts"],
+    queryKey: ["/api/forum/posts"],
     enabled: !!user
   });
+  
+  // Filter posts by category if applicable
+  const posts = categoryFilter
+    ? allPosts.filter(post => post.category === categoryFilter)
+    : allPosts;
   
   // Create new post mutation
   const createPostMutation = useMutation({
@@ -360,6 +363,37 @@ export function ForumList() {
         </Button>
       </div>
       
+      {/* Category Filter - at the top of the page, sticky position */}
+      <div className="sticky top-0 z-20 pt-2 pb-4 bg-background">
+        <div className="bg-card shadow-md rounded-lg p-3 border">
+          <div className="flex items-center mb-2">
+            <Filter className="h-4 w-4 mr-2" />
+            <span className="text-sm font-medium">Filter by category</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant={categoryFilter === null ? "default" : "outline"} 
+              size="sm"
+              onClick={() => handleCategoryFilter(null)}
+              className="text-xs"
+            >
+              All
+            </Button>
+            {["General", "Stress Management", "Anxiety", "Depression", "Relationships", "Support", "Academic Stress", "Self-Care"].map(category => (
+              <Button
+                key={category}
+                variant={categoryFilter === category ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleCategoryFilter(category)}
+                className="text-xs"
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+      
       {isLoadingPosts ? (
         <div className="flex justify-center items-center h-48">
           <p>Loading forum posts...</p>
@@ -368,13 +402,24 @@ export function ForumList() {
         <Card>
           <CardContent className="pt-6 pb-6 text-center">
             <AlertCircle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <CardTitle className="text-xl mb-2">No Forum Posts Yet</CardTitle>
+            <CardTitle className="text-xl mb-2">
+              {categoryFilter ? `No Posts in "${categoryFilter}" Category` : "No Forum Posts Yet"}
+            </CardTitle>
             <p className="text-muted-foreground mb-4">
-              Be the first to start a discussion in our community forum!
+              {categoryFilter 
+                ? `There are no discussions in the ${categoryFilter} category yet.`
+                : "Be the first to start a discussion in our community forum!"}
             </p>
-            <Button onClick={() => setIsNewPostModalOpen(true)}>
-              Create First Post
-            </Button>
+            <div className="flex gap-2 justify-center">
+              {categoryFilter && (
+                <Button variant="outline" onClick={() => handleCategoryFilter(null)}>
+                  View All Posts
+                </Button>
+              )}
+              <Button onClick={() => setIsNewPostModalOpen(true)}>
+                Create {categoryFilter ? `${categoryFilter} Post` : "First Post"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -569,12 +614,12 @@ export function ForumList() {
                       <SelectContent>
                         <SelectItem value="General">General</SelectItem>
                         <SelectItem value="Stress Management">Stress Management</SelectItem>
-                        <SelectItem value="Study Techniques">Study Techniques</SelectItem>
                         <SelectItem value="Anxiety">Anxiety</SelectItem>
                         <SelectItem value="Depression">Depression</SelectItem>
                         <SelectItem value="Relationships">Relationships</SelectItem>
-                        <SelectItem value="Resources">Resources</SelectItem>
                         <SelectItem value="Support">Support</SelectItem>
+                        <SelectItem value="Academic Stress">Academic Stress</SelectItem>
+                        <SelectItem value="Self-Care">Self-Care</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -668,36 +713,7 @@ export function ForumList() {
         </DialogContent>
       </Dialog>
 
-      {/* Category Filter - now fixed at the top */}
-      <div className="sticky top-0 z-20 mb-6 bg-background pt-2 pb-2">
-        <div className="bg-card shadow-md rounded-lg p-3 border">
-          <div className="flex items-center mb-2">
-            <Filter className="h-4 w-4 mr-2" />
-            <span className="text-sm font-medium">Filter by category</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              variant={categoryFilter === null ? "default" : "outline"} 
-              size="sm"
-              onClick={() => handleCategoryFilter(null)}
-              className="text-xs"
-            >
-              All
-            </Button>
-            {["General", "Stress Management", "Anxiety", "Depression", "Relationships", "Support", "Academic Stress", "Self-Care"].map(category => (
-              <Button
-                key={category}
-                variant={categoryFilter === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleCategoryFilter(category)}
-                className="text-xs"
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 }
