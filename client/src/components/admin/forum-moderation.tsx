@@ -88,13 +88,16 @@ export function ForumModeration() {
   
   // Fetch reported comments
   const { 
-    data: reportedComments = [], 
+    data: reportedCommentsRaw = [], 
     isLoading: isLoadingComments,
     refetch: refetchComments
   } = useQuery<ExtendedForumComment[]>({
     queryKey: ["/api/admin/forum/reported-comments"],
     retry: 1,
   });
+  
+  // Filter out deleted comments from the reported comments
+  const reportedComments = reportedCommentsRaw.filter(comment => !comment.isDeleted);
   
   // Delete post mutation
   const deletePostMutation = useMutation({

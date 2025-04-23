@@ -718,6 +718,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Mark the comment as deleted rather than actually deleting it
       comment.isDeleted = true;
+      comment.isReported = false; // Remove from reported items when deleted
+      comment.reportReason = ""; // Clear the report reason
       comment.content = "[deleted]" + (deleteReason ? ` - ${deleteReason}` : "");
       comment.updatedAt = new Date();
       

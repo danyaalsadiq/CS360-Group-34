@@ -27,12 +27,15 @@ const AdminPage = () => {
   
   // Fetch reported comments
   const { 
-    data: reportedComments = []
+    data: reportedCommentsRaw = []
   } = useQuery<any[]>({
     queryKey: ["/api/admin/forum/reported-comments"],
     retry: 1,
     enabled: user?.role === 'admin'
   });
+
+  // Filter out deleted comments
+  const reportedComments = reportedCommentsRaw.filter(comment => !comment.isDeleted);
 
   // Calculate total reports count
   const totalReportCount = (reportedPosts?.length || 0) + (reportedComments?.length || 0);

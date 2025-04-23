@@ -928,131 +928,143 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
         </div>
       ) : (
         <div className="space-y-4">
-          {comments.map((comment) => (
-            <div key={comment.id} className="flex space-x-3">
-              {comment.user ? (
-                <>
-                  {comment.user.profileImage ? (
-                    <img 
-                      src={comment.user.profileImage} 
-                      alt={comment.user.name}
-                      className="w-8 h-8 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-xs font-medium text-primary">
-                        {comment.user.name.charAt(0)}
-                      </span>
-                    </div>
-                  )}
-                  <div>
-                    <div className="bg-muted p-3 rounded-lg">
-                      <div className="flex items-center mb-1">
-                        <span className="font-medium text-sm">
-                          {comment.user.name}
-                        </span>
-                        <span className="mx-1.5 text-xs text-muted-foreground">•</span>
-                        <span className="text-xs text-muted-foreground capitalize">
-                          {comment.user.role}
+          {comments.map((comment) => {
+            if (comment.isDeleted) {
+              // For deleted comments, show a simple non-interactive indicator
+              return (
+                <div key={comment.id} className="ml-8 bg-muted/20 p-3 rounded-lg border border-muted">
+                  <p className="text-sm text-muted-foreground italic">{comment.content}</p>
+                </div>
+              );
+            }
+            
+            // For normal comments, show the full interactive component
+            return (
+              <div key={comment.id} className="flex space-x-3">
+                {comment.user ? (
+                  <>
+                    {comment.user.profileImage ? (
+                      <img 
+                        src={comment.user.profileImage} 
+                        alt={comment.user.name}
+                        className="w-8 h-8 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-xs font-medium text-primary">
+                          {comment.user.name.charAt(0)}
                         </span>
                       </div>
-                      <p className="text-sm">{comment.content}</p>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(comment.createdAt), 'MMM d, yyyy • h:mm a')}
-                      </p>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleLikeComment(comment.id)}
-                          className={`h-6 px-2 ${comment.hasLiked ? "text-primary" : "text-muted-foreground"}`}
-                        >
-                          <Heart className={`h-3.5 w-3.5 mr-1 ${comment.hasLiked ? "fill-primary" : ""}`} />
-                          <span className="text-xs">{comment.likes?.length || 0}</span>
-                        </Button>
+                    )}
+                    <div>
+                      <div className="bg-muted p-3 rounded-lg">
+                        <div className="flex items-center mb-1">
+                          <span className="font-medium text-sm">
+                            {comment.user.name}
+                          </span>
+                          <span className="mx-1.5 text-xs text-muted-foreground">•</span>
+                          <span className="text-xs text-muted-foreground capitalize">
+                            {comment.user.role}
+                          </span>
+                        </div>
+                        <p className="text-sm">{comment.content}</p>
+                      </div>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(comment.createdAt), 'MMM d, yyyy • h:mm a')}
+                        </p>
                         
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleReportComment(comment)}
-                          className="h-6 px-2 text-muted-foreground hover:text-destructive"
-                        >
-                          <Flag className="h-3.5 w-3.5" />
-                        </Button>
-                        
-                        {(user?.role === "admin" || (comment.user && user && comment.user.id.toString() === user.id.toString())) && (
+                        <div className="flex items-center space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteComment(comment.id)}
-                            className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleLikeComment(comment.id)}
+                            className={`h-6 px-2 ${comment.hasLiked ? "text-primary" : "text-muted-foreground"}`}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Heart className={`h-3.5 w-3.5 mr-1 ${comment.hasLiked ? "fill-primary" : ""}`} />
+                            <span className="text-xs">{comment.likes?.length || 0}</span>
                           </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
-                    <User className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                  </div>
-                  <div>
-                    <div className="bg-muted p-3 rounded-lg">
-                      <div className="flex items-center mb-1">
-                        <span className="font-medium text-sm">
-                          Anonymous User
-                        </span>
-                      </div>
-                      <p className="text-sm">{comment.content}</p>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(comment.createdAt), 'MMM d, yyyy • h:mm a')}
-                      </p>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleLikeComment(comment.id)}
-                          className={`h-6 px-2 ${comment.hasLiked ? "text-primary" : "text-muted-foreground"}`}
-                        >
-                          <Heart className={`h-3.5 w-3.5 mr-1 ${comment.hasLiked ? "fill-primary" : ""}`} />
-                          <span className="text-xs">{comment.likes?.length || 0}</span>
-                        </Button>
-                        
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleReportComment(comment)}
-                          className="h-6 px-2 text-muted-foreground hover:text-destructive"
-                        >
-                          <Flag className="h-3.5 w-3.5" />
-                        </Button>
-                        
-                        {user?.role === "admin" && (
+                          
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteComment(comment.id)}
+                            onClick={() => handleReportComment(comment)}
                             className="h-6 px-2 text-muted-foreground hover:text-destructive"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Flag className="h-3.5 w-3.5" />
                           </Button>
-                        )}
+                        
+                          {(user?.role === "admin" || (comment.user && user && comment.user.id.toString() === user.id.toString())) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
+                  </>
+                ) : (
+                  <>
+                    <div className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
+                      <User className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                    </div>
+                    <div>
+                      <div className="bg-muted p-3 rounded-lg">
+                        <div className="flex items-center mb-1">
+                          <span className="font-medium text-sm">
+                            Anonymous User
+                          </span>
+                        </div>
+                        <p className="text-sm">{comment.content}</p>
+                      </div>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(comment.createdAt), 'MMM d, yyyy • h:mm a')}
+                        </p>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleLikeComment(comment.id)}
+                            className={`h-6 px-2 ${comment.hasLiked ? "text-primary" : "text-muted-foreground"}`}
+                          >
+                            <Heart className={`h-3.5 w-3.5 mr-1 ${comment.hasLiked ? "fill-primary" : ""}`} />
+                            <span className="text-xs">{comment.likes?.length || 0}</span>
+                          </Button>
+                          
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleReportComment(comment)}
+                            className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                          >
+                            <Flag className="h-3.5 w-3.5" />
+                          </Button>
+                          
+                          {user?.role === "admin" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
       
