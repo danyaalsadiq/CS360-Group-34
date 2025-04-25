@@ -21,11 +21,7 @@ import { StudentRequestModel } from './models/student-request';
 import { setupWebSocketServer, sendNotificationToUser } from './websocket';
 import { NotificationService } from './services/notification-service';
 import { NotificationModel } from './models/notification';
-<<<<<<< HEAD
 import { ForumCommentModel, UserModel, FeedbackModel } from './models';
-=======
-import { ForumCommentModel, UserModel } from './models';
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -269,7 +265,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Feedback routes
   app.get("/api/feedback", isAuthenticated, hasRole(["therapist", "admin"]), async (req, res) => {
-<<<<<<< HEAD
     try {
       // If no therapistId provided and user is a therapist, use their ID
       let therapistId = req.query.therapistId as string;
@@ -344,41 +339,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error in feedback API:", error);
       res.status(500).json({ message: "Error fetching feedback", error: error instanceof Error ? error.message : String(error) });
     }
-=======
-    const therapistId = req.query.therapistId as string;
-    
-    if (!therapistId) {
-      return res.status(400).json({ message: "Therapist ID is required" });
-    }
-    
-    if (req.user!.role === "therapist" && therapistId !== req.user!.id.toString()) {
-      return res.status(403).json({ message: "You can only view your own feedback" });
-    }
-    
-    const feedbackList = await storage.listFeedbackByTherapist(therapistId);
-    
-    // Fetch appointment details for each feedback
-    const feedbackWithDetails = await Promise.all(feedbackList.map(async feedback => {
-      const appointment = await storage.getAppointment(feedback.appointmentId);
-      const student = appointment ? await storage.getUser(appointment.studentId) : null;
-      
-      return {
-        ...feedback,
-        appointment: appointment ? {
-          id: appointment.id,
-          date: appointment.date,
-          status: appointment.status,
-        } : null,
-        student: student ? {
-          id: student.id,
-          name: student.name,
-          profileImage: student.profileImage,
-        } : null,
-      };
-    }));
-    
-    res.json(feedbackWithDetails);
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
   });
 
   // This route was removed to fix the feedback submission process
@@ -400,7 +360,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username: req.user?.username
       });
       
-<<<<<<< HEAD
       const appointmentId = req.body.appointmentId;
       const therapistId = req.body.therapistId;
       const studentId = req.user?.role === 'student' ? req.user?.id.toString() : req.body.studentId;
@@ -430,21 +389,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         therapistId,
         rating: parseInt(req.body.rating, 10), 
         comments: req.body.comments || '' // Using comments consistently throughout the application
-=======
-      // Save feedback data directly without validation of appointment
-      // This approach assumes feedback is for slot IDs, not appointment IDs
-      const feedbackData = {
-        appointmentId: req.body.appointmentId,
-        studentId: req.user?.role === 'student' ? req.user?.id.toString() : req.body.studentId,
-        therapistId: req.body.therapistId,
-        rating: parseInt(req.body.rating, 10), 
-        comments: req.body.comments || ''
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
       };
       
       console.log('Prepared feedback data:', feedbackData);
       
-<<<<<<< HEAD
       // Save the feedback in the database
       const feedback = await storage.createFeedback(feedbackData);
       console.log('Feedback saved successfully:', feedback);
@@ -479,11 +427,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Failed to send feedback notification:', notifyError);
       }
       
-=======
-      const feedback = await storage.createFeedback(feedbackData);
-      
-      console.log('Feedback saved successfully:', feedback);
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
       res.status(201).json(feedback);
     } catch (error) {
       console.error('Error creating feedback:', error);
@@ -501,7 +444,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Unauthorized' });
       }
       
-<<<<<<< HEAD
       // Get all feedback for this therapist
       const feedbacks = await storage.listFeedbackByTherapist(therapistId);
       console.log(`Found ${feedbacks.length} feedback items for therapist ${therapistId}`);
@@ -573,17 +515,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
       
       res.json(enhancedFeedback);
-=======
-      const feedbacks = await storage.listFeedbackByTherapist(therapistId);
-      res.json(feedbacks);
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
     } catch (error) {
       console.error('Error listing therapist feedback:', error);
       res.status(500).json({ error: 'Failed to list feedback' });
     }
   });
   
-<<<<<<< HEAD
   // Get feedback provided by a student
   app.get('/api/feedback/student', isAuthenticated, async (req, res) => {
     try {
@@ -659,26 +596,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Fetching feedback for appointment:', appointmentId);
       
       // Find feedback for this appointment
-=======
-  app.get('/api/feedback/appointment/:appointmentId', isAuthenticated, async (req, res) => {
-    try {
-      const { appointmentId } = req.params;
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
       const feedback = await storage.listFeedbackByAppointment(appointmentId);
       
       if (!feedback) {
         return res.status(404).json({ error: 'No feedback found for this appointment' });
       }
       
-<<<<<<< HEAD
       console.log('Found feedback:', { 
         id: feedback.id, 
         studentId: feedback.studentId, 
         therapistId: feedback.therapistId 
       });
       
-=======
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
       // Ensure only admin, the student who gave feedback, or the therapist who received it can view it
       if (req.user?.role !== 'admin' && 
           req.user?.id.toString() !== feedback.studentId &&
@@ -686,7 +615,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Unauthorized' });
       }
       
-<<<<<<< HEAD
       // Get related entities
       let appointment = null;
       let student = null;
@@ -744,12 +672,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error getting appointment feedback:', error);
       res.status(500).json({ error: 'Failed to get feedback', details: error instanceof Error ? error.message : String(error) });
-=======
-      res.json(feedback);
-    } catch (error) {
-      console.error('Error getting appointment feedback:', error);
-      res.status(500).json({ error: 'Failed to get feedback' });
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
     }
   });
 

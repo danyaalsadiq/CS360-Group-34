@@ -507,7 +507,6 @@ export function ForumList() {
                     {post.likes?.length || 0} {(post.likes?.length || 0) === 1 ? "Like" : "Likes"}
                   </Button>
                   
-<<<<<<< HEAD
                   <Button
                     variant="ghost"
                     size="sm"
@@ -517,19 +516,6 @@ export function ForumList() {
                     <Flag className="h-4 w-4 mr-2" />
                     Report
                   </Button>
-=======
-                  {user?.role !== "admin" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleReportPost(post)}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <Flag className="h-4 w-4 mr-2" />
-                      Report
-                    </Button>
-                  )}
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
                 </div>
                 
                 <div className="flex items-center">
@@ -1015,7 +1001,6 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
                             <span className="text-xs">{comment.likes?.length || 0}</span>
                           </Button>
                           
-<<<<<<< HEAD
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1024,18 +1009,6 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
                           >
                             <Flag className="h-3.5 w-3.5" />
                           </Button>
-=======
-                          {user?.role !== "admin" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleReportComment(comment)}
-                              className="h-6 px-2 text-muted-foreground hover:text-destructive"
-                            >
-                              <Flag className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
                         
                           {(user?.role === "admin" || (comment.user && user && comment.user.id.toString() === user.id.toString())) && (
                             <Button

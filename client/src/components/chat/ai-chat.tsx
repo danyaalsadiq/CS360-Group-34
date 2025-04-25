@@ -155,15 +155,9 @@ export function AiChat() {
                 <BrainCircuit className="h-16 w-16 text-primary/60 mb-4" />
                 <h3 className="text-xl font-medium mb-2">Website Navigation Assistant</h3>
                 <p className="text-muted-foreground max-w-md">
-<<<<<<< HEAD
                   I'm here to help you navigate the CAPS Management System. Ask me about appointments, 
                   the calendar system, forums, feedback, waitlists, or any feature you need help with. 
                   All main features are accessible from the sidebar menu.
-=======
-                  I'm here to help you navigate this platform. Ask me how to find specific features 
-                  like booking appointments, accessing forums, submitting feedback, or any other 
-                  functionality you need assistance with.
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
                 </p>
               </div>
             ) : (

@@ -724,7 +724,6 @@ export function ForumModeration() {
               )}
             </div>
             
-<<<<<<< HEAD
             <Textarea
               placeholder={adminAction === "delete" 
                 ? "Optional: Add notes about why this is being deleted..." 
@@ -733,18 +732,6 @@ export function ForumModeration() {
               onChange={(e) => setAdminActionNote(e.target.value)}
               className="min-h-[80px]"
             />
-=======
-            {selectedTab === "comments" && (
-              <Textarea
-                placeholder={adminAction === "delete" 
-                  ? "Optional: Add notes about why this is being deleted..." 
-                  : "Optional: Add notes about approving this content..."}
-                value={adminActionNote}
-                onChange={(e) => setAdminActionNote(e.target.value)}
-                className="min-h-[80px]"
-              />
-            )}
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
           </div>
           
           <DialogFooter>
