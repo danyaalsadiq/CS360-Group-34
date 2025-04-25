@@ -452,7 +452,7 @@ export const markAvailability = async (req: Request, res: Response) => {
 export const cancelSlot = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { reason } = req.body;
+    const { reason, reassign } = req.body; // Added reassign parameter
     
     const slot = await SlotModel.findById(id);
     
@@ -481,18 +481,70 @@ export const cancelSlot = async (req: Request, res: Response) => {
     const slotTime = slot.start_time;
     
     // Different handling based on slot state:
+    // Find waitlisted students for this slot
+    const waitlistedRequests = await StudentRequestModel.find({
+      preferred_therapist_id: therapistId,
+      requested_date: slotDate,
+      requested_time: slotTime,
+      status: 'waiting'
+    }).sort({ created_at: 1 }); // Sort by creation time (first come, first served)
+    
     // If slot has a student (is booked), just update status
     // If slot is just marked available by therapist, delete it entirely
     if (slot.student_id) {
-      // This is a booked appointment - update status and clear student data
-      slot.status = 'cancelled';
-      slot.notes = reason || slot.notes;
-      slot.student_id = undefined;
-      slot.student_name = undefined;
-      await slot.save();
+      // This is a booked appointment being cancelled
+      
+      // Check if we should reassign to a waitlisted student
+      // For student cancellations, always try to reassign if there are waitlisted students
+      // For therapist/admin cancellations, respect the reassign flag from the frontend
+      const shouldReassign = (isAssignedStudent || reassign !== false) && waitlistedRequests.length > 0;
+      
+      if (shouldReassign) {
+        // Get the first waitlisted student
+        const nextStudent = waitlistedRequests[0];
+        
+        // Update the slot with the new student
+        slot.student_id = nextStudent.student_id;
+        slot.student_name = nextStudent.student_name;
+        slot.status = 'booked';
+        slot.notes = `Automatically reassigned from waitlist. ${reason ? `Previous appointment cancelled reason: ${reason}` : ''}`;
+        await slot.save();
+        
+        // Update the student request
+        nextStudent.status = 'assigned';
+        nextStudent.assigned_slot_id = slot._id.toString();
+        await nextStudent.save();
+        
+        // Mark all other waitlisted requests as cancelled
+        if (waitlistedRequests.length > 1) {
+          for (let i = 1; i < waitlistedRequests.length; i++) {
+            waitlistedRequests[i].status = 'cancelled';
+            await waitlistedRequests[i].save();
+          }
+        }
+        
+        console.log(`Successfully reassigned slot ${id} to student ${nextStudent.student_id}`);
+      } else {
+        // No waitlisted students or student cancellation - just mark as available
+        slot.status = 'available';
+        slot.notes = reason || slot.notes;
+        slot.student_id = undefined;
+        slot.student_name = undefined;
+        await slot.save();
+        
+        console.log(`Cleared slot ${id} and marked as available (no reassignment)`);
+      }
     } else if (isTherapist || isAdmin) {
-      // This is a marked availability (no student) - delete it completely
-      await SlotModel.findByIdAndDelete(id);
+      // This is a marked availability (no student)
+      if (isTherapist) {
+        // Check if we want to just delete it or keep it available
+        await SlotModel.findByIdAndDelete(id);
+      } else if (isAdmin) {
+        // Admins might want to keep the slot but mark it as unavailable
+        slot.status = 'cancelled';
+        slot.notes = reason || slot.notes;
+        await slot.save();
+      }
     } else {
       // Fallback case - just mark as cancelled
       slot.status = 'cancelled';
@@ -530,7 +582,13 @@ export const cancelSlot = async (req: Request, res: Response) => {
         if (isAssignedStudent) {
           // Student cancelled their own appointment
           studentMessage = `You have cancelled your appointment scheduled for ${slotDate} at ${slotTime}.${reason ? ` Reason: ${reason}` : ''}`;
-          therapistMessage = `The student (${studentName}) has cancelled their appointment scheduled for ${slotDate} at ${slotTime}.${reason ? ` Reason: ${reason}` : ''}`;
+          
+          // If slot was reassigned to a waitlisted student
+          if (shouldReassign) {
+            therapistMessage = `The student (${studentName}) has cancelled their appointment scheduled for ${slotDate} at ${slotTime}. The slot has been automatically reassigned to a waitlisted student.${reason ? ` Cancellation reason: ${reason}` : ''}`;
+          } else {
+            therapistMessage = `The student (${studentName}) has cancelled their appointment scheduled for ${slotDate} at ${slotTime}. The slot is now available again.${reason ? ` Reason: ${reason}` : ''}`;
+          }
         } else if (isTherapist) {
           // Therapist cancelled the appointment
           studentMessage = `Your therapist (${therapistName}) has cancelled your appointment scheduled for ${slotDate} at ${slotTime}.${reason ? ` Reason: ${reason}` : ''}`;
@@ -580,24 +638,64 @@ export const cancelSlot = async (req: Request, res: Response) => {
         if (notifications[0]) sendNotificationToUser(therapistId, notifications[0]);
       }
       
-      // Also notify all waiting students that the slot is no longer available
+      // Notify waitlisted students based on what happened to the slot
       if (waitingStudents.length > 0) {
         for (const waitingStudent of waitingStudents) {
-          // Create cancellation notification for waiting student
+          // Create appropriate notification based on cancellation source and reassignment status
+          let title = '';
+          let message = '';
+          let type = '';
+          
+          // If a student cancelled and there was a reassignment (meaning one of the waitlisted students got the slot)
+          // Handle student cancellations with waitlisted students
+          if (isAssignedStudent && waitlistedRequests.length > 0 && (isAssignedStudent || reassign !== false)) {
+            // If this is the first student in the waitlist who was reassigned
+            // Need to safely compare the student ids
+            const firstWaitlistedId = waitlistedRequests[0]._id ? waitlistedRequests[0]._id.toString() : '';
+            const currentWaitingId = waitingStudent._id ? waitingStudent._id.toString() : '';
+            
+            if (firstWaitlistedId && currentWaitingId && firstWaitlistedId === currentWaitingId) {
+              title = 'Appointment Assigned';
+              message = `Good news! A slot on ${slotDate} at ${slotTime} with ${therapistName} has become available and has been assigned to you.`;
+              type = 'waitlist_matched';
+            } else {
+              // Other waitlisted students who were not at the front of the queue
+              title = 'Slot Update';
+              message = `The slot you were waiting for on ${slotDate} at ${slotTime} with ${therapistName} has been assigned to another student higher in the waitlist.`;
+              type = 'slot_unavailable';
+              
+              // Update the student request status to cancelled
+              waitingStudent.status = 'cancelled';
+              await waitingStudent.save();
+            }
+          } 
+          // If therapist cancelled but we're reassigning
+          else if (reassign === true) {
+            title = 'Slot Assignment Update';
+            message = `The therapist has cancelled their availability on ${slotDate} at ${slotTime}, but your request is still active. You will be automatically assigned if this slot becomes available again.`;
+            type = 'slot_reassignment_pending';
+          } 
+          // Default case - slot is no longer available
+          else {
+            title = 'Slot Unavailable';
+            message = `The slot you were waiting for on ${slotDate} at ${slotTime} with ${therapistName} is no longer available.${reason ? ` Reason: ${reason}` : ''}`;
+            type = 'slot_unavailable';
+            
+            // Update the student request status to cancelled
+            waitingStudent.status = 'cancelled';
+            await waitingStudent.save();
+          }
+          
           const waitingNotification = await notificationService.createNotification({
             userId: waitingStudent.student_id,
-            title: 'Slot Unavailable',
-            message: `The slot you were waiting for on ${slotDate} at ${slotTime} with ${therapistName} is no longer available.${reason ? ` Reason: ${reason}` : ''}`,
-            type: 'slot_unavailable',
+            title: title,
+            message: message,
+            type: type,
             relatedId: waitingStudent._id.toString()
           });
           
           // Send notification via WebSocket
           sendNotificationToUser(waitingStudent.student_id, waitingNotification);
-          
-          // Update the student request status to cancelled
-          waitingStudent.status = 'cancelled';
-          await waitingStudent.save();
         }
       }
     } catch (notifError: any) {

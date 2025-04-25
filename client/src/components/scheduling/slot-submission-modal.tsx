@@ -258,17 +258,43 @@ export function SlotSubmissionModal({
     }
   }, [slotInfo, effectiveSlotData, user?.id, isStudent]);
   
+  // State for therapist cancellation options (reassign or remove)
+  const [showTherapistCancelOptions, setShowTherapistCancelOptions] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [cancelAction, setCancelAction] = useState<'reassign' | 'remove' | null>(null);
+  
   const handleCancelSlot = () => {
     if (!effectiveSlotData.id) return;
     
-    // Set reason based on role for better visibility in notifications
-    const reason = isStudent 
-      ? 'Cancelled by student' 
-      : isTherapist
-        ? 'Cancelled by therapist'
-        : 'Cancelled by user';
-        
-    cancelSlotMutation.mutate({ reason });
+    // For therapists with students assigned, show reassignment options first
+    if (isTherapist && slotStatus === 'assigned' && !showTherapistCancelOptions) {
+      setShowTherapistCancelOptions(true);
+      return;
+    }
+    
+    // Generate reason based on role and action
+    let reason = '';
+    
+    if (isStudent) {
+      reason = 'Cancelled by student';
+    } else if (isTherapist) {
+      reason = cancellationReason || 'Cancelled by therapist';
+      
+      // Add the chosen action to the reason
+      if (cancelAction === 'reassign') {
+        reason += ' - Requested automatic reassignment from waitlist';
+      } else if (cancelAction === 'remove') {
+        reason += ' - Requested complete removal';
+      }
+    } else {
+      reason = 'Cancelled by admin';
+    }
+    
+    // Include reassignment preference in the mutation data
+    cancelSlotMutation.mutate({ 
+      reason, 
+      reassign: cancelAction === 'reassign'
+    });
   };
   
   const handleSuccess = () => {
@@ -528,6 +554,99 @@ export function SlotSubmissionModal({
   
   const renderAssignedSlotContent = () => {
     if (!effectiveSlotData) return <div>Error: No slot data available</div>;
+    
+    // If the therapist is cancelling and we're showing options
+    if (isTherapist && showTherapistCancelOptions) {
+      return (
+        <div className="space-y-4 py-4">
+          <Alert className="bg-amber-50 border-amber-200">
+            <AlertCircle className="h-4 w-4 text-amber-500 mr-2" />
+            <AlertDescription className="text-amber-700">
+              Please select what you'd like to do with this appointment:
+            </AlertDescription>
+          </Alert>
+          
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium">Cancellation Options</h3>
+            
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="radio" 
+                  id="reassign" 
+                  name="cancelOption"
+                  checked={cancelAction === 'reassign'}
+                  onChange={() => setCancelAction('reassign')}
+                  className="h-4 w-4 text-primary border-gray-300 focus:ring-primary-500"
+                />
+                <label htmlFor="reassign" className="text-sm font-medium text-gray-900 ml-2">
+                  Reassign to waitlisted student
+                  <p className="text-xs text-gray-500">
+                    The first student on the waitlist for this time slot will automatically be assigned to replace the current student.
+                    This maintains your availability and helps students who were waiting.
+                  </p>
+                </label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="radio" 
+                  id="remove" 
+                  name="cancelOption"
+                  checked={cancelAction === 'remove'}
+                  onChange={() => setCancelAction('remove')}
+                  className="h-4 w-4 text-primary border-gray-300 focus:ring-primary-500"
+                />
+                <label htmlFor="remove" className="text-sm font-medium text-gray-900 ml-2">
+                  Remove this slot completely
+                  <p className="text-xs text-gray-500">
+                    The appointment will be cancelled and the slot will be completely removed from your calendar.
+                    All waitlisted students will be notified that this slot is no longer available.
+                  </p>
+                </label>
+              </div>
+            </div>
+            
+            <div className="pt-2">
+              <h3 className="text-sm font-medium">Optional Reason</h3>
+              <textarea
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2 text-sm"
+                placeholder="Enter an optional reason for cancellation"
+                rows={2}
+              />
+            </div>
+            
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowTherapistCancelOptions(false)}
+                className="flex-1"
+              >
+                Back
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleCancelSlot}
+                disabled={!cancelAction || cancelSlotMutation.isPending}
+                className="flex-1"
+              >
+                {cancelSlotMutation.isPending ? (
+                  <>
+                    <span className="animate-spin mr-2">⟳</span> Cancelling...
+                  </>
+                ) : (
+                  "Confirm Cancellation"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
     
     // Check if the appointment is in the past to show "Mark as Completed" button
     const isPastAppointment = () => {
