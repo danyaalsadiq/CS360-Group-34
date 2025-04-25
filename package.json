@@ -45,12 +45,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
-<<<<<<< HEAD
     "drizzle-orm": "^0.43.1",
-=======
-    "dotenv": "^16.5.0",
-    "drizzle-orm": "^0.42.0",
->>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
     "drizzle-zod": "^0.7.1",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
