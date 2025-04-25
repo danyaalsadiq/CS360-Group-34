@@ -30,14 +30,18 @@ export async function generateAIResponse(options: GenerateAIResponseOptions): Pr
     
     // System message to set the AI's behavior and purpose
     const systemMessage = `You are a helpful website navigation assistant for a university counseling service platform. 
-    Your goal is to help users navigate the website and find the features they need. 
-    Provide clear and concise directions on how to use the platform's features, such as:
-    - How to book appointments
-    - How to access the forums
-    - How to view therapist profiles
-    - How to submit feedback
-    - How to use the system effectively based on their role (student, therapist, or admin)
-    Keep responses concise, friendly, and focused on website functionality (under 75 words).
+    Your goal is to help users navigate the website and find the features they need.
+    
+    IMPORTANT DETAILS ABOUT THE PLATFORM:
+    - NAVIGATION: All main features are accessible from the sidebar menu, NOT from the top of the page
+    - APPOINTMENTS: Students book by: 1) Going to Dashboard/Availability calendar, 2) Clicking a slot, 3) Selecting a preferred therapist, 4) Waiting for scheduling
+    - CALENDAR: Accessed from sidebar, shows appointments organized as Today/Upcoming/Past
+    - FORUMS: Users can create posts, comment, like, and filter by category
+    - FEEDBACK: Students give feedback by: 1) Clicking Weekly Schedule, 2) Clicking their assigned slot, 3) Clicking "Join Meeting & Rate Your Therapist", 4) Rating with stars and comments, 5) Submitting
+    - ADMIN: Administrators can moderate forums and manage users from their dashboard
+    
+    Provide clear and concise directions on how to use the platform's features based on the user's role (student, therapist, or admin).
+    Keep responses concise, friendly, and focused on correct website navigation (under 100 words).
     ${context ? `Additional context: ${context}` : ''}`;
     
     // Make the API call to Groq (via OpenAI client)
@@ -77,25 +81,35 @@ function simulateFallbackResponse(userMessage: string): string {
   if (lowerCaseMessage.includes("hello") || lowerCaseMessage.includes("hi")) {
     return "Hello! I'm your website navigation assistant. How can I help you use the platform today?";
   } 
-  else if (lowerCaseMessage.includes("appointment") || lowerCaseMessage.includes("schedule")) {
-    return "You can schedule an appointment from your dashboard. Click on 'Appointments' in the sidebar, then the 'Book Appointment' button to select an available time slot with your preferred therapist.";
+  else if (lowerCaseMessage.includes("appointment") || lowerCaseMessage.includes("schedule") || lowerCaseMessage.includes("book")) {
+    return "To book an appointment: 1) Go to Dashboard or Availability calendar from the sidebar, 2) Click on a slot, 3) Select your preferred therapist, 4) Wait for the appointment to be scheduled. The system will automatically match students with therapists based on availability.";
   }
-  else if (lowerCaseMessage.includes("forum") || lowerCaseMessage.includes("discussion")) {
-    return "To access the community forums, click on the 'Forums' link in the sidebar menu. There you can view existing discussions or start a new one by clicking the 'New Post' button.";
+  else if (lowerCaseMessage.includes("availability") || lowerCaseMessage.includes("time slot") || lowerCaseMessage.includes("calendar")) {
+    return "Access the appointment calendar by clicking 'Calendar' in the sidebar. Students: click on a slot and select a preferred therapist, then wait for matching. Therapists: mark available slots. The system handles the matching process automatically.";
   }
-  else if (lowerCaseMessage.includes("feedback") || lowerCaseMessage.includes("review")) {
-    return "You can submit feedback for your appointments by going to the 'Feedback' section from your dashboard or clicking on a completed appointment and selecting 'Leave Feedback'.";
+  else if (lowerCaseMessage.includes("forum") || lowerCaseMessage.includes("discussion") || lowerCaseMessage.includes("post")) {
+    return "Access the forums by clicking 'Forums' in the sidebar. You can browse posts by category, create new posts, comment on discussions, and like posts. Posts can be filtered by category using the dropdown menu.";
   }
-  else if (lowerCaseMessage.includes("profile") || lowerCaseMessage.includes("account")) {
-    return "To view or edit your profile, click on your name in the top right corner and select 'Profile' from the dropdown menu.";
+  else if (lowerCaseMessage.includes("feedback") || lowerCaseMessage.includes("review") || lowerCaseMessage.includes("rate")) {
+    return "To give feedback: 1) Click 'Weekly Schedule' on your sidebar, 2) Click on your assigned meeting slot, 3) Click 'Join Meeting & Rate Your Therapist', 4) Rate your therapist with 1-5 stars and add comments, 5) Click 'Submit Feedback'. Your feedback will appear in the Feedback menu.";
+  }
+  else if (lowerCaseMessage.includes("admin") || lowerCaseMessage.includes("moderation")) {
+    return "Administrators can access forum moderation from the Admin Dashboard. Click on 'Forums' in the admin sidebar to view reported posts and comments. You can also manage therapists and students from the admin interface.";
   }
   else if (lowerCaseMessage.includes("therapist") || lowerCaseMessage.includes("counselor")) {
-    return "You can view available therapists when booking an appointment. Each therapist has a profile with their specialization and availability information.";
+    return "Therapists mark available slots on their calendar by clicking on slots and confirming. When students request those slots, matching happens automatically. Therapists can view their upcoming appointments, feedback, and manage slots - all accessible from the sidebar menu.";
   }
+  else if (lowerCaseMessage.includes("student") || lowerCaseMessage.includes("client")) {
+    return "Students can book appointments by clicking slots on the calendar, join forums, and provide feedback for completed sessions. To book: go to the calendar, click a slot, select a therapist, and wait for confirmation. For feedback: click on your assigned slot and use the 'Join Meeting & Rate' button.";
+  }
+  else if (lowerCaseMessage.includes("chat") || lowerCaseMessage.includes("ai") || lowerCaseMessage.includes("help")) {
+    return "This chat assistant helps you navigate the website. It's available from any page via the chat icon in the sidebar. Ask about any feature to get guidance on how to use it.";
+  }
+
   else if (lowerCaseMessage.includes("thank")) {
     return "You're welcome! I'm here to help you navigate the website. Is there anything else you'd like to know about using the platform?";
   }
   else {
-    return "I'm here to help you navigate the website. You can ask me how to find specific features like booking appointments, accessing forums, submitting feedback, or any other platform functionality you need assistance with.";
+    return "I'm here to help you navigate the website. You can ask me how to find features like appointments, forums, feedback, or any other functionality. All main features are accessible from the sidebar menu.";
   }
 }
