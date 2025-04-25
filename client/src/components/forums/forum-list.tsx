@@ -507,15 +507,17 @@ export function ForumList() {
                     {post.likes?.length || 0} {(post.likes?.length || 0) === 1 ? "Like" : "Likes"}
                   </Button>
                   
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleReportPost(post)}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <Flag className="h-4 w-4 mr-2" />
-                    Report
-                  </Button>
+                  {user?.role !== "admin" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleReportPost(post)}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Flag className="h-4 w-4 mr-2" />
+                      Report
+                    </Button>
+                  )}
                 </div>
                 
                 <div className="flex items-center">
@@ -1001,14 +1003,16 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
                             <span className="text-xs">{comment.likes?.length || 0}</span>
                           </Button>
                           
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleReportComment(comment)}
-                            className="h-6 px-2 text-muted-foreground hover:text-destructive"
-                          >
-                            <Flag className="h-3.5 w-3.5" />
-                          </Button>
+                          {user?.role !== "admin" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleReportComment(comment)}
+                              className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                            >
+                              <Flag className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         
                           {(user?.role === "admin" || (comment.user && user && comment.user.id.toString() === user.id.toString())) && (
                             <Button
