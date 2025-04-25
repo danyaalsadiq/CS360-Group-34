@@ -74,7 +74,7 @@ export async function generateAIResponse(options: GenerateAIResponseOptions): Pr
   }
 }
 
-// Fallback responses if API is not available
+
 function simulateFallbackResponse(userMessage: string): string {
   const lowerCaseMessage = userMessage.toLowerCase();
   
