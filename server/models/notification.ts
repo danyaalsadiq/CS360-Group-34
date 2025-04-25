@@ -19,7 +19,17 @@ const notificationSchema = new Schema<INotification>(
     type: { 
       type: String, 
       required: true, 
-      enum: ['appointment_assigned', 'appointment_cancelled', 'appointment_completed', 'system', 'appointment_reminder', 'waitlist_matched'] 
+      enum: [
+        'appointment_assigned', 
+        'appointment_cancelled', 
+        'appointment_completed', 
+        'system', 
+        'appointment_reminder', 
+        'waitlist_matched',
+        'slot_unavailable',
+        'slot_reassignment_pending',
+        'availability_cancelled'
+      ] 
     },
     relatedId: { type: String, required: true },
     isRead: { type: Boolean, default: false },

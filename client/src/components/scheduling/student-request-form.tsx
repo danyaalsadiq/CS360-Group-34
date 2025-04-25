@@ -146,7 +146,12 @@ export function StudentRequestForm({
       } else if (data.match_status === 'alternate_offered') {
         toast({
           title: 'Alternative slot offered',
-          description: 'Your preferred slot wasn\'t available. An alternative has been suggested - please check your appointments.',
+          description: 'An alternative time has been suggested - please check your appointments.',
+        });
+      } else if (data.match_status === 'waitlisted') {
+        toast({
+          title: 'Added to waitlist',
+          description: 'This slot is already booked by another student. You have been added to the waitlist and will be notified if it becomes available.',
         });
       } else {
         toast({

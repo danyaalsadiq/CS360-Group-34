@@ -31,7 +31,8 @@ export function TherapistDashboard() {
     isLoading: isLoadingAppointments,
     error: appointmentsError
   } = useQuery<(Appointment & { 
-    student: { id: number; name: string; profileImage?: string }; 
+    student?: { id: number; name: string; profileImage?: string }; 
+    _id?: string; // MongoDB ID
   })[]>({
     queryKey: ["/api/appointments"],
     enabled: !!user
@@ -43,11 +44,15 @@ export function TherapistDashboard() {
     isLoading: isLoadingFeedback, 
     error: feedbackError
   } = useQuery<(Feedback & { 
-    appointment: { id: number; date: string; status: string };
-    student: { id: number; name: string; profileImage?: string };
+    appointment?: { id: number; date: string; status: string };
+    student?: { id: number; name: string; profileImage?: string };
+    studentName?: string;
+    appointmentDate?: string;
+    appointmentStatus?: string;
+    _id?: string;  // MongoDB ID
   })[]>({
-    queryKey: ["/api/feedback", { therapistId: user?.id }],
-    enabled: !!user
+    queryKey: [`/api/feedback/therapist/${user?.id}`],
+    enabled: !!user && !!user.id
   });
   
   // Fetch students
@@ -231,30 +236,28 @@ export function TherapistDashboard() {
                   const appointmentDate = new Date(appointment.date);
                   const canJoin = Math.abs(new Date().getTime() - appointmentDate.getTime()) < 15 * 60 * 1000; // within 15 minutes
                   
+                  // Handle possible missing student data
+                  const studentName = appointment.student?.name || "Student";
+                  const studentInitial = studentName.charAt(0);
+                  const studentId = appointment.student?.id || "";
+                  
                   return (
-                    <li key={appointment.id}>
+                    <li key={appointment.id || appointment._id}>
                       <div className="block hover:bg-neutral-50 dark:hover:bg-neutral-700/50">
                         <div className="flex items-center px-4 py-4 sm:px-6">
                           <div className="min-w-0 flex-1 flex items-center">
                             <div className="flex-shrink-0">
-                              {appointment.student.profileImage ? (
-                                <img 
-                                  className="h-12 w-12 rounded-full" 
-                                  src={appointment.student.profileImage} 
-                                  alt={appointment.student.name} 
-                                />
-                              ) : (
-                                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <span className="text-lg font-medium text-primary">
-                                    {appointment.student.name.charAt(0)}
-                                  </span>
-                                </div>
-                              )}
+                              {/* Always use avatar for consistency */}
+                              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-lg font-medium text-primary">
+                                  {studentInitial}
+                                </span>
+                              </div>
                             </div>
                             <div className="min-w-0 flex-1 px-4">
                               <div>
                                 <p className="text-sm font-medium text-primary truncate">
-                                  {appointment.student.name}
+                                  {studentName}
                                 </p>
                                 <p className="mt-1 flex items-center text-sm text-neutral-500 dark:text-neutral-400">
                                   <span>Therapy Session</span>
@@ -280,16 +283,18 @@ export function TherapistDashboard() {
                                 <Video className="-ml-0.5 mr-2 h-4 w-4" />
                                 Join Session
                               </Button>
-                              <Link href={`/student/${appointment.student.id}`}>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  className="flex items-center"
-                                >
-                                  <User className="-ml-0.5 mr-2 h-4 w-4" />
-                                  View Profile
-                                </Button>
-                              </Link>
+                              {studentId && (
+                                <Link href={`/student/${studentId}`}>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    className="flex items-center"
+                                  >
+                                    <User className="-ml-0.5 mr-2 h-4 w-4" />
+                                    View Profile
+                                  </Button>
+                                </Link>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -325,54 +330,61 @@ export function TherapistDashboard() {
               </div>
             ) : (
               <ul className="divide-y divide-neutral-200 dark:divide-neutral-700">
-                {feedback.slice(0, 3).map((item) => (
-                  <li key={item.id}>
-                    <div className="px-4 py-4 sm:px-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          {item.student.profileImage ? (
-                            <img 
-                              className="h-10 w-10 rounded-full mr-3" 
-                              src={item.student.profileImage} 
-                              alt={item.student.name} 
-                            />
-                          ) : (
+                {feedback.slice(0, 3).map((item) => {
+                  // Get student name from either format (direct or nested)
+                  const studentName = item.studentName || (item.student?.name) || "Anonymous";
+                  
+                  // Get date from either format (direct or nested)
+                  const appointmentDate = item.appointmentDate || 
+                    (item.appointment?.date) || new Date().toISOString();
+                  
+                  // Function to render star rating
+                  const renderStarRating = (rating: number) => (
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i} 
+                          className={`h-4 w-4 ${i < rating ? "text-amber-500 fill-current" : "text-gray-300"}`} 
+                        />
+                      ))}
+                    </div>
+                  );
+                  
+                  return (
+                    <li key={item.id || item._id}>
+                      <div className="px-4 py-4 sm:px-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            {/* Use avatar with initials */}
                             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
                               <span className="text-base font-medium text-primary">
-                                {item.student.name.charAt(0)}
+                                {studentName.charAt(0)}
                               </span>
                             </div>
-                          )}
-                          <div>
-                            <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                              {item.student.name}
-                            </p>
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                              {format(new Date(item.appointment.date), 'MMMM d, yyyy')}
-                            </p>
+                            <div>
+                              <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                                {studentName}
+                              </p>
+                              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                {format(new Date(appointmentDate), 'MMMM d, yyyy')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            {renderStarRating(item.rating)}
                           </div>
                         </div>
-                        <div className="flex items-center">
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star 
-                                key={i} 
-                                className={`h-4 w-4 ${i < item.rating ? "text-amber-500 fill-current" : "text-gray-300"}`} 
-                              />
-                            ))}
+                        {item.comments && (
+                          <div className="mt-2">
+                            <p className="text-sm text-neutral-600 dark:text-neutral-300">
+                              "{item.comments}"
+                            </p>
                           </div>
-                        </div>
+                        )}
                       </div>
-                      {item.comments && (
-                        <div className="mt-2">
-                          <p className="text-sm text-neutral-600 dark:text-neutral-300">
-                            "{item.comments}"
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </CardContent>
