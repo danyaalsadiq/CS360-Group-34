@@ -22,17 +22,43 @@ export function FeedbackForm({ appointmentId, therapistId, onSubmitSuccess, onCa
 
   const submitFeedbackMutation = useMutation({
     mutationFn: async (data: { rating: number; comments: string }) => {
+      // If therapistId is not provided, try to fetch it from the slot
+      let effectiveTherapistId = therapistId;
+      let slotData: any = null;
+      
+      if (!effectiveTherapistId) {
+        try {
+          console.log("Attempting to get therapist ID from slot:", appointmentId);
+          const slotResponse = await apiRequest("GET", `/api/slots/${appointmentId}`);
+          
+          if (slotResponse.ok) {
+            slotData = await slotResponse.json();
+            effectiveTherapistId = slotData.therapist_id;
+            console.log("Retrieved therapist ID from slot:", effectiveTherapistId);
+          } else {
+            console.error("Failed to fetch slot details");
+          }
+        } catch (slotError) {
+          console.error("Error fetching slot details:", slotError);
+        }
+      }
+      
+      if (!effectiveTherapistId) {
+        throw new Error("Could not determine therapist ID for feedback");
+      }
+      
       // Log data for debugging
       console.log('Submitting feedback with data:', {
         appointmentId,
-        therapistId,
+        therapistId: effectiveTherapistId,
         rating: data.rating,
         comments: data.comments,
       });
       
+      // 1. Submit the feedback
       const response = await apiRequest('POST', '/api/feedback', {
         appointmentId,
-        therapistId,
+        therapistId: effectiveTherapistId,
         rating: data.rating,
         comments: data.comments,
       });
@@ -43,11 +69,32 @@ export function FeedbackForm({ appointmentId, therapistId, onSubmitSuccess, onCa
         throw new Error(errorData.message || 'Failed to submit feedback');
       }
 
-      return response.json();
+      const feedbackResult = await response.json();
+      
+      // 2. Mark the slot as completed
+      try {
+        console.log("Marking slot as completed:", appointmentId);
+        const updateResponse = await apiRequest('PATCH', `/api/slots/${appointmentId}/status`, {
+          status: 'completed'
+        });
+        
+        if (!updateResponse.ok) {
+          console.warn('Failed to automatically mark slot as completed, but feedback was saved');
+        } else {
+          console.log('Successfully marked slot as completed');
+        }
+      } catch (err) {
+        console.error('Error updating slot status:', err);
+        // Don't throw here - we still want to consider feedback successful
+      }
+
+      return feedbackResult;
     },
     onSuccess: () => {
+      // Invalidate relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/feedback'] });
       queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/slots'] });
       
       toast({
         title: 'Feedback submitted',

@@ -30,8 +30,10 @@ import { format } from "date-fns";
 import { Star } from "lucide-react";
 
 // Extended schema with validation
-const feedbackFormSchema = insertFeedbackSchema.extend({
+const feedbackFormSchema = z.object({
+  appointmentId: z.string(),
   rating: z.number().min(1, "Please select a rating").max(5, "Please select a rating"),
+  comments: z.string().optional(),
 });
 
 type FeedbackFormValues = z.infer<typeof feedbackFormSchema>;
@@ -64,9 +66,9 @@ export function FeedbackModal({ isOpen, appointmentId, onClose, onSuccess }: Fee
   const form = useForm<FeedbackFormValues>({
     resolver: zodResolver(feedbackFormSchema),
     defaultValues: {
-      appointmentId: appointmentId,
+      appointmentId: appointmentId ? appointmentId.toString() : undefined,
       rating: 0,
-      comment: ""
+      comments: ""
     }
   });
   
@@ -74,9 +76,9 @@ export function FeedbackModal({ isOpen, appointmentId, onClose, onSuccess }: Fee
   useEffect(() => {
     if (isOpen && appointmentId) {
       form.reset({
-        appointmentId: appointmentId,
+        appointmentId: appointmentId.toString(),
         rating: 0,
-        comment: ""
+        comments: ""
       });
     }
   }, [isOpen, appointmentId, form]);
@@ -86,18 +88,67 @@ export function FeedbackModal({ isOpen, appointmentId, onClose, onSuccess }: Fee
     try {
       setIsSubmitting(true);
       
-      await apiRequest("POST", "/api/feedback", data);
+      // Get therapist ID from appointment if available, otherwise use the slot details
+      let therapistId = appointment?.therapist?.id?.toString();
       
-      // Invalidate queries to refetch data
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/feedback"] });
+      // If appointment details are not available, proceed with just the appointment/slot ID
+      // The backend will handle finding the therapist
+      if (!therapistId) {
+        console.log("Using direct therapist ID lookup without appointment details");
+        
+        // Try to get therapist ID from the slot
+        try {
+          const slotResponse = await apiRequest("GET", `/api/slots/${appointmentId}`);
+          if (slotResponse.ok) {
+            const slotData = await slotResponse.json();
+            therapistId = slotData.therapist_id;
+            console.log("Retrieved therapist ID from slot:", therapistId);
+          }
+        } catch (slotError) {
+          console.error("Error fetching slot details:", slotError);
+        }
+        
+        if (!therapistId) {
+          throw new Error("Could not determine therapist ID for this session");
+        }
+      }
       
-      toast({
-        title: "Feedback submitted",
-        description: "Thank you for your feedback!",
-      });
+      // Create complete feedback data
+      const feedbackData = {
+        ...data,
+        therapistId
+      };
       
-      onSuccess();
+      console.log("Submitting feedback with data:", feedbackData);
+      
+      const response = await apiRequest("POST", "/api/feedback", feedbackData);
+      const result = await response.json();
+      
+      if (response.ok) {
+        // Invalidate queries to refetch data
+        queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/feedback"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/slots"] });
+        
+        toast({
+          title: "Feedback submitted",
+          description: "Thank you for your feedback!",
+        });
+        
+        onSuccess();
+      } else {
+        // Handle case where feedback already exists
+        if (result.error && result.error.includes("already submitted")) {
+          toast({
+            title: "Feedback already submitted",
+            description: "You have already provided feedback for this appointment.",
+            variant: "destructive",
+          });
+          onClose();
+        } else {
+          throw new Error(result.error || "Failed to submit feedback");
+        }
+      }
     } catch (error) {
       toast({
         title: "Failed to submit feedback",
@@ -180,7 +231,7 @@ export function FeedbackModal({ isOpen, appointmentId, onClose, onSuccess }: Fee
               
               <FormField
                 control={form.control}
-                name="comment"
+                name="comments"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Additional Comments (Optional)</FormLabel>
