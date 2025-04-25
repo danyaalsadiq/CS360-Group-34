@@ -64,7 +64,11 @@ export const feedback = pgTable("feedback", {
   id: serial("id").primaryKey(),
   appointmentId: integer("appointment_id").notNull(),
   rating: integer("rating").notNull(), // 1-5 stars
+<<<<<<< HEAD
+  comments: text("comments"), // Updated from comment to comments for consistency
+=======
   comment: text("comment"),
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -72,7 +76,11 @@ export const feedback = pgTable("feedback", {
 const originalFeedbackSchema = createInsertSchema(feedback).pick({
   appointmentId: true,
   rating: true,
+<<<<<<< HEAD
+  comments: true, // Updated from comment to comments for consistency
+=======
   comment: true,
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
 });
 
 // Modified schema for MongoDB compatibility
@@ -82,9 +90,14 @@ export const insertFeedbackSchema = originalFeedbackSchema
     appointmentId: z.string(),
     studentId: z.string().optional(),
     therapistId: z.string().optional(),
+<<<<<<< HEAD
+    // Using comments consistently throughout the application
+    comments: z.string().optional(),
+=======
     // Rename comment to comments to match the interface
     comments: z.string().optional(),
     comment: z.string().optional().transform(val => val), // Keep for backward compatibility
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
   });
 
 // Mental Health Goals Table

@@ -1,3 +1,18 @@
+<<<<<<< HEAD
+{
+    "compilerOptions": {
+      "composite": true,
+      "module": "ESNext",
+      "moduleResolution": "Node",
+      "target": "ESNext",
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "types": ["node"]
+    },
+    "include": ["vite.config.ts"]
+  }
+  
+=======
 {
     "compilerOptions": {
       "composite": true,
@@ -8,3 +23,4 @@
     },
     "include": ["vite.config.ts"]
   }
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18

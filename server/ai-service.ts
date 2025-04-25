@@ -40,6 +40,11 @@ export async function generateAIResponse(options: GenerateAIResponseOptions): Pr
     - FEEDBACK: Students give feedback by: 1) Clicking Weekly Schedule, 2) Clicking their assigned slot, 3) Clicking "Join Meeting & Rate Your Therapist", 4) Rating with stars and comments, 5) Submitting
     - ADMIN: Administrators can moderate forums and manage users from their dashboard
     
+<<<<<<< HEAD
+    NEVER mention a "Help" tab at the top of the page, or any dropdown menus in the top navigation - these don't exist.
+    
+=======
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
     Provide clear and concise directions on how to use the platform's features based on the user's role (student, therapist, or admin).
     Keep responses concise, friendly, and focused on correct website navigation (under 100 words).
     ${context ? `Additional context: ${context}` : ''}`;
@@ -74,7 +79,11 @@ export async function generateAIResponse(options: GenerateAIResponseOptions): Pr
   }
 }
 
+<<<<<<< HEAD
+// Fallback responses if API is not available
+=======
 
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
 function simulateFallbackResponse(userMessage: string): string {
   const lowerCaseMessage = userMessage.toLowerCase();
   

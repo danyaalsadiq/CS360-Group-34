@@ -21,7 +21,11 @@ import { StudentRequestModel } from './models/student-request';
 import { setupWebSocketServer, sendNotificationToUser } from './websocket';
 import { NotificationService } from './services/notification-service';
 import { NotificationModel } from './models/notification';
+<<<<<<< HEAD
+import { ForumCommentModel, UserModel, FeedbackModel } from './models';
+=======
 import { ForumCommentModel, UserModel } from './models';
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -265,6 +269,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Feedback routes
   app.get("/api/feedback", isAuthenticated, hasRole(["therapist", "admin"]), async (req, res) => {
+<<<<<<< HEAD
+    try {
+      // If no therapistId provided and user is a therapist, use their ID
+      let therapistId = req.query.therapistId as string;
+      
+      if (!therapistId && req.user?.role === "therapist") {
+        therapistId = req.user.id.toString();
+        console.log("No therapistId provided, using current user ID:", therapistId);
+      } else if (!therapistId && req.user?.role === "admin") {
+        // For admins with no specific therapist ID, return empty array
+        console.log("Admin requesting feedback with no therapistId parameter");
+        return res.json([]);
+      } else if (!therapistId) {
+        return res.status(400).json({ message: "Therapist ID is required" });
+      }
+      
+      if (req.user!.role === "therapist" && therapistId !== req.user!.id.toString()) {
+        return res.status(403).json({ message: "You can only view your own feedback" });
+      }
+      
+      console.log("Fetching feedback for therapist ID:", therapistId);
+      
+      // Get feedback for this therapist from MongoDB
+      const feedbackList = await storage.listFeedbackByTherapist(therapistId);
+      console.log(`Found ${feedbackList.length} feedback entries for therapistId ${therapistId}`);
+      
+      // Fetch appointment and student details for each feedback
+      const feedbackWithDetails = await Promise.all(feedbackList.map(async feedback => {
+        console.log("Processing feedback ID:", feedback.id, "AppointmentId:", feedback.appointmentId);
+        
+        let appointment = null;
+        let student = null;
+        
+        try {
+          // First try to get the appointment
+          appointment = await storage.getAppointment(parseInt(feedback.appointmentId));
+          console.log("Appointment found:", !!appointment);
+          
+          // If appointment exists, get the student
+          if (appointment) {
+            student = await storage.getUser(parseInt(appointment.studentId));
+            console.log("Student found:", !!student);
+          }
+        } catch (error) {
+          console.error("Error fetching appointment or student details:", error);
+        }
+        
+        return {
+          ...feedback,
+          appointment: appointment ? {
+            id: appointment.id,
+            date: appointment.date,
+            status: appointment.status,
+          } : { 
+            id: parseInt(feedback.appointmentId),
+            date: "Unknown date",
+            status: "unknown"
+          },
+          student: student ? {
+            id: student.id,
+            name: student.name,
+            profileImage: student.profileImage,
+          } : {
+            id: parseInt(feedback.studentId || "0"),
+            name: "Unknown student",
+            profileImage: undefined
+          },
+        };
+      }));
+      
+      res.json(feedbackWithDetails);
+    } catch (error) {
+      console.error("Error in feedback API:", error);
+      res.status(500).json({ message: "Error fetching feedback", error: error instanceof Error ? error.message : String(error) });
+    }
+=======
     const therapistId = req.query.therapistId as string;
     
     if (!therapistId) {
@@ -298,6 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }));
     
     res.json(feedbackWithDetails);
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
   });
 
   // This route was removed to fix the feedback submission process
@@ -319,6 +400,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username: req.user?.username
       });
       
+<<<<<<< HEAD
+      const appointmentId = req.body.appointmentId;
+      const therapistId = req.body.therapistId;
+      const studentId = req.user?.role === 'student' ? req.user?.id.toString() : req.body.studentId;
+      
+      if (!appointmentId) {
+        return res.status(400).json({ error: 'Appointment ID is required' });
+      }
+      
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
+      }
+      
+      // Check if the student has already submitted feedback for this appointment
+      const existingFeedback = await storage.listFeedbackByAppointment(appointmentId);
+      if (existingFeedback) {
+        return res.status(400).json({ 
+          error: 'You have already submitted feedback for this appointment',
+          existingFeedback
+        });
+      }
+      
+      // Instead of requiring an appointment record, we'll directly use the provided IDs
+      // This handles slots that don't have traditional appointment records
+      const feedbackData = {
+        appointmentId,
+        studentId,
+        therapistId,
+        rating: parseInt(req.body.rating, 10), 
+        comments: req.body.comments || '' // Using comments consistently throughout the application
+=======
       // Save feedback data directly without validation of appointment
       // This approach assumes feedback is for slot IDs, not appointment IDs
       const feedbackData = {
@@ -327,13 +439,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         therapistId: req.body.therapistId,
         rating: parseInt(req.body.rating, 10), 
         comments: req.body.comments || ''
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
       };
       
       console.log('Prepared feedback data:', feedbackData);
       
+<<<<<<< HEAD
+      // Save the feedback in the database
+      const feedback = await storage.createFeedback(feedbackData);
+      console.log('Feedback saved successfully:', feedback);
+      
+      // Mark the slot as "completed" based on appointment ID
+      try {
+        // Attempt to find the slot by ID and update its status
+        const slot = await SlotModel.findById(appointmentId);
+        if (slot) {
+          slot.status = 'completed';
+          await slot.save();
+          console.log('Slot status updated to "completed"');
+        } else {
+          console.log('No slot found with ID:', appointmentId);
+        }
+      } catch (slotError) {
+        console.error('Error updating slot status:', slotError);
+        // We'll still return success, even if the slot status update fails
+      }
+      
+      // Notify the therapist about the new feedback
+      try {
+        await notificationService.createNotification({
+          userId: therapistId,
+          type: 'system', // Using system as the notification type for feedback
+          title: 'New Feedback Received',
+          message: `A student has left you a ${feedback.rating}-star rating with feedback`,
+          relatedId: appointmentId, // Using the appointment/slot ID as the related ID
+          isRead: false,
+        });
+      } catch (notifyError) {
+        console.error('Failed to send feedback notification:', notifyError);
+      }
+      
+=======
       const feedback = await storage.createFeedback(feedbackData);
       
       console.log('Feedback saved successfully:', feedback);
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
       res.status(201).json(feedback);
     } catch (error) {
       console.error('Error creating feedback:', error);
@@ -351,10 +501,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Unauthorized' });
       }
       
+<<<<<<< HEAD
+      // Get all feedback for this therapist
+      const feedbacks = await storage.listFeedbackByTherapist(therapistId);
+      console.log(`Found ${feedbacks.length} feedback items for therapist ${therapistId}`);
+      
+      // Enhance feedback with additional details
+      const enhancedFeedback = await Promise.all(feedbacks.map(async feedback => {
+        let studentName = "Unknown student";
+        let appointmentDate = "Unknown date";
+        let appointmentStatus = "unknown";
+        
+        try {
+          // Try to get student details directly from MongoDB using student ID
+          if (feedback.studentId) {
+            console.log(`Looking up student with ID: ${feedback.studentId}`);
+            try {
+              // First try using the MongoDB UserModel directly
+              const student = await UserModel.findById(feedback.studentId);
+              if (student) {
+                console.log(`Found student in MongoDB: ${student.name}`);
+                studentName = student.name;
+              } else {
+                // Fall back to storage API if MongoDB lookup fails
+                const storageStudent = await storage.getUser(parseInt(feedback.studentId));
+                if (storageStudent) {
+                  console.log(`Found student in storage: ${storageStudent.name}`);
+                  studentName = storageStudent.name;
+                }
+              }
+            } catch (studentErr) {
+              console.error(`Error finding student: ${studentErr instanceof Error ? studentErr.message : String(studentErr)}`);
+            }
+          }
+          
+          // Try to get appointment details from slot (most likely case for our app)
+          if (feedback.appointmentId) {
+            try {
+              console.log(`Looking up slot with ID: ${feedback.appointmentId}`);
+              const slot = await SlotModel.findById(feedback.appointmentId);
+              if (slot) {
+                console.log(`Found slot date: ${slot.date}`);
+                appointmentDate = slot.date;
+                appointmentStatus = slot.status;
+              } else {
+                // Fall back to appointment lookup if slot not found
+                try {
+                  const appointment = await storage.getAppointment(parseInt(feedback.appointmentId));
+                  if (appointment) {
+                    appointmentDate = appointment.date;
+                    appointmentStatus = appointment.status;
+                  }
+                } catch (apptErr) {
+                  console.log('Appointment not found in storage');
+                }
+              }
+            } catch (slotErr) {
+              console.log('Could not find slot details:', slotErr instanceof Error ? slotErr.message : String(slotErr));
+            }
+          }
+        } catch (err) {
+          console.error('Error enhancing feedback:', err instanceof Error ? err.message : String(err));
+        }
+        
+        return {
+          ...feedback,
+          studentName,
+          appointmentDate,
+          appointmentStatus
+        };
+      }));
+      
+      res.json(enhancedFeedback);
+=======
       const feedbacks = await storage.listFeedbackByTherapist(therapistId);
       res.json(feedbacks);
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
     } catch (error) {
       console.error('Error listing therapist feedback:', error);
+      res.status(500).json({ error: 'Failed to list feedback' });
+    }
+  });
+  
+<<<<<<< HEAD
+  // Get feedback provided by a student
+  app.get('/api/feedback/student', isAuthenticated, async (req, res) => {
+    try {
+      // Only allow students to view their own feedback
+      if (req.user?.role !== 'student' && req.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      
+      const studentId = req.user?.id.toString();
+      console.log('Fetching feedback for student ID:', studentId);
+      
+      // Find all feedback submitted by this student
+      const feedbacks = await FeedbackModel.find({ studentId }).sort({ createdAt: -1 });
+      console.log('Found feedback count:', feedbacks.length);
+      
+      // Simpler processing to avoid potential issues
+      const feedbackWithDetails = await Promise.all(feedbacks.map(async feedback => {
+        // Safely get the feedback ID
+        const feedbackId = feedback._id ? feedback._id.toString() : '';
+        
+        let therapistName = "Unknown therapist";
+        let appointmentDate = "Unknown date";
+        
+        try {
+          // Simple therapist lookup
+          if (feedback.therapistId) {
+            const therapist = await UserModel.findById(feedback.therapistId);
+            if (therapist) {
+              therapistName = therapist.name || "Unknown therapist";
+            }
+          }
+          
+          // Get appointment date (from slot or appointment)
+          if (feedback.appointmentId) {
+            try {
+              const slot = await SlotModel.findById(feedback.appointmentId);
+              if (slot) {
+                appointmentDate = slot.date || "Unknown date";
+              }
+            } catch (err) {
+              console.log('Error finding slot');
+            }
+          }
+        } catch (err) {
+          console.error('Error enhancing feedback:', err);
+        }
+        
+        // Return simplified object
+        return {
+          id: feedbackId,
+          rating: feedback.rating,
+          comments: feedback.comments || "",
+          createdAt: feedback.createdAt,
+          appointment: {
+            date: appointmentDate
+          },
+          therapist: {
+            name: therapistName
+          }
+        };
+      }));
+      
+      res.json(feedbackWithDetails);
+    } catch (error) {
+      console.error('Error listing student feedback:', error);
       res.status(500).json({ error: 'Failed to list feedback' });
     }
   });
@@ -362,12 +656,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/feedback/appointment/:appointmentId', isAuthenticated, async (req, res) => {
     try {
       const { appointmentId } = req.params;
+      console.log('Fetching feedback for appointment:', appointmentId);
+      
+      // Find feedback for this appointment
+=======
+  app.get('/api/feedback/appointment/:appointmentId', isAuthenticated, async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
       const feedback = await storage.listFeedbackByAppointment(appointmentId);
       
       if (!feedback) {
         return res.status(404).json({ error: 'No feedback found for this appointment' });
       }
       
+<<<<<<< HEAD
+      console.log('Found feedback:', { 
+        id: feedback.id, 
+        studentId: feedback.studentId, 
+        therapistId: feedback.therapistId 
+      });
+      
+=======
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
       // Ensure only admin, the student who gave feedback, or the therapist who received it can view it
       if (req.user?.role !== 'admin' && 
           req.user?.id.toString() !== feedback.studentId &&
@@ -375,10 +686,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Unauthorized' });
       }
       
+<<<<<<< HEAD
+      // Get related entities
+      let appointment = null;
+      let student = null;
+      let therapist = null;
+      
+      try {
+        if (feedback.appointmentId) {
+          appointment = await storage.getAppointment(parseInt(feedback.appointmentId));
+        }
+        
+        if (feedback.studentId) {
+          student = await storage.getUser(parseInt(feedback.studentId));
+        }
+        
+        if (feedback.therapistId) {
+          therapist = await storage.getUser(parseInt(feedback.therapistId));
+        }
+      } catch (err) {
+        console.error('Error fetching related entities:', err);
+      }
+      
+      // Return enriched feedback
+      const enrichedFeedback = {
+        ...feedback,
+        appointment: appointment ? {
+          id: appointment.id,
+          date: appointment.date,
+          status: appointment.status,
+        } : { 
+          id: parseInt(feedback.appointmentId),
+          date: "Unknown date",
+          status: "unknown"
+        },
+        student: student ? {
+          id: student.id,
+          name: student.name,
+          profileImage: student.profileImage,
+        } : {
+          id: parseInt(feedback.studentId || "0"),
+          name: "Unknown student",
+          profileImage: undefined
+        },
+        therapist: therapist ? {
+          id: therapist.id,
+          name: therapist.name,
+          profileImage: therapist.profileImage,
+        } : {
+          id: parseInt(feedback.therapistId || "0"),
+          name: "Unknown therapist",
+          profileImage: undefined
+        },
+      };
+      
+      res.json(enrichedFeedback);
+    } catch (error) {
+      console.error('Error getting appointment feedback:', error);
+      res.status(500).json({ error: 'Failed to get feedback', details: error instanceof Error ? error.message : String(error) });
+=======
       res.json(feedback);
     } catch (error) {
       console.error('Error getting appointment feedback:', error);
       res.status(500).json({ error: 'Failed to get feedback' });
+>>>>>>> 5f0bc715104c70e1c11ea30a3cff716a771bcf18
     }
   });
 
