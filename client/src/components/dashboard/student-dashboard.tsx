@@ -40,16 +40,6 @@ export function StudentDashboard() {
     queryKey: ["/api/appointments"],
     enabled: !!user
   });
-  
-  useEffect(() => {
-    if (appointmentsError) {
-      toast({
-        title: "Error loading appointments",
-        description: "Failed to load your appointments. Please try again later.",
-        variant: "destructive",
-      });
-    }
-  }, [appointmentsError, toast]);
 
   // Filter appointments
   const upcomingAppointments = appointments
