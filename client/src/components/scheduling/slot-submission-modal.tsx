@@ -115,7 +115,7 @@ export function SlotSubmissionModal({
     },
     enabled: !!effectiveSlotData.id,
     // Enable polling to get real-time updates every 5 seconds
-    refetchInterval: 5000,
+    refetchInterval: 20000,
     // Only poll when the component is visible
     refetchIntervalInBackground: false,
     // Refetch when window regains focus
