@@ -16,6 +16,8 @@ import {
   assignStudentToSlot,
   markSlotCompleted
 } from './controllers/slot-functions';
+// import { SlotModel } from './models/slot';
+import { adminAssignStudent } from './controllers/admin-slot-controller';
 import { SlotModel } from './models/slot';
 import { StudentRequestModel } from './models/student-request';
 import { setupWebSocketServer, sendNotificationToUser } from './websocket';
@@ -1476,8 +1478,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Admin assigns student to slot (admin-only)
-  app.post('/api/slots/admin/assign', isAuthenticated, hasRole(['admin']), assignStudentToSlot);
+  // app.post('/api/slots/admin/assign', isAuthenticated, hasRole(['admin']), assignStudentToSlot);
   
+  app.post('/api/slots/admin/assign', isAuthenticated, hasRole(['admin']), adminAssignStudent);
+
   // Mark a slot as completed (for past slots)
   app.post('/api/slots/:id/complete', isAuthenticated, markSlotCompleted);
   
