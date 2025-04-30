@@ -9,16 +9,7 @@ import {
   CardFooter 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Calendar,
-  Users,
-  User,
-  MessageSquare,
-  BarChart3,
-  ArrowRight,
-  Star,
-  Settings
-} from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { Appointment, User as UserType } from "@shared/schema";
 
@@ -93,288 +84,59 @@ export function AdminDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Removed redundant heading as it's already in the header */}
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card>
-          <CardContent className="pt-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-primary/10 dark:bg-primary/20 rounded-md p-3">
-                <User className="h-6 w-6 text-primary" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-neutral-500 dark:text-neutral-400 truncate">
-                    Therapists
-                  </dt>
-                  <dd>
-                    <div className="text-lg font-medium text-neutral-900 dark:text-white">
-                      {isLoadingTherapists ? "..." : therapists.length}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="bg-neutral-50 dark:bg-neutral-800/50 px-5 py-3">
-            <Link href="/therapists">
-              <Button variant="link" className="h-auto p-0">
-                Manage therapists
-              </Button>
-            </Link>
-          </CardFooter>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-md p-3">
-                <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-neutral-500 dark:text-neutral-400 truncate">
-                    Students
-                  </dt>
-                  <dd>
-                    <div className="text-lg font-medium text-neutral-900 dark:text-white">
-                      {isLoadingStudents ? "..." : students.length}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="bg-neutral-50 dark:bg-neutral-800/50 px-5 py-3">
-            <Link href="/students">
-              <Button variant="link" className="h-auto p-0">
-                Manage students
-              </Button>
-            </Link>
-          </CardFooter>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-amber-100 dark:bg-amber-900/30 rounded-md p-3">
-                <Calendar className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-neutral-500 dark:text-neutral-400 truncate">
-                    Today's Sessions
-                  </dt>
-                  <dd>
-                    <div className="text-lg font-medium text-neutral-900 dark:text-white">
-                      {isLoadingAppointments ? "..." : todaysAppointments}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="bg-neutral-50 dark:bg-neutral-800/50 px-5 py-3">
-            <Link href="/schedule">
-              <Button variant="link" className="h-auto p-0">
-                View schedule
-              </Button>
-            </Link>
-          </CardFooter>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-purple-100 dark:bg-purple-900/30 rounded-md p-3">
-                <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-neutral-500 dark:text-neutral-400 truncate">
-                    Total Sessions
-                  </dt>
-                  <dd>
-                    <div className="text-lg font-medium text-neutral-900 dark:text-white">
-                      {isLoadingAppointments ? "..." : totalAppointments}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="bg-neutral-50 dark:bg-neutral-800/50 px-5 py-3">
-            <Link href="/analytics">
-              <Button variant="link" className="h-auto p-0">
-                View analytics
-              </Button>
-            </Link>
-          </CardFooter>
-        </Card>
-      </div>
-
-      {/* Session Statistics */}
-      <div className="mb-8">
-        <h2 className="text-lg font-medium text-neutral-900 dark:text-white mb-4">
-          Session Statistics
-        </h2>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex flex-col items-center">
-                <div className="text-3xl font-bold text-primary">
-                  {isLoadingAppointments ? "..." : completedAppointments}
-                </div>
-                <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                  Completed Sessions
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex flex-col items-center">
-                <div className="text-3xl font-bold text-amber-500">
-                  {isLoadingAppointments ? "..." : scheduledAppointments}
-                </div>
-                <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                  Upcoming Sessions
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex flex-col items-center">
-                <div className="text-3xl font-bold text-green-500">
-                  {isLoadingAppointments && isLoadingTherapists ? "..." : 
-                    therapists.length > 0 ? (totalAppointments / therapists.length).toFixed(1) : "0"}
-                </div>
-                <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                  Avg. Sessions per Therapist
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="mb-8">
-        <h2 className="text-lg font-medium text-neutral-900 dark:text-white mb-4">
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardContent className="p-5">
-              <h3 className="text-lg leading-6 font-medium text-neutral-900 dark:text-white">
-                Schedule Sessions
-              </h3>
-              <div className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-                <p>Assign therapists to students and schedule new therapy sessions.</p>
-              </div>
-              <div className="mt-5">
-                <Link href="/schedule/new">
-                  <Button className="flex items-center">
-                    <Calendar className="-ml-1 mr-2 h-5 w-5" />
-                    Schedule Session
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-5">
-              <h3 className="text-lg leading-6 font-medium text-neutral-900 dark:text-white">
-                Therapist Feedback
-              </h3>
-              <div className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-                <p>View student feedback for all therapists in the system.</p>
-              </div>
-              <div className="mt-5">
-                <Link href="/feedback">
-                  <Button className="flex items-center">
-                    <Star className="-ml-1 mr-2 h-5 w-5" />
-                    View Feedback
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-5">
-              <h3 className="text-lg leading-6 font-medium text-neutral-900 dark:text-white">
-                Forum Moderation
-              </h3>
-              <div className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-                <p>Moderate community discussions and manage forum content.</p>
-              </div>
-              <div className="mt-5">
-                <Link href="/forums">
-                  <Button className="flex items-center">
-                    <MessageSquare className="-ml-1 mr-2 h-5 w-5" />
-                    Moderate Forums
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* System Settings */}
-      <div className="mb-8">
-        <h2 className="text-lg font-medium text-neutral-900 dark:text-white mb-4">
-          System Management
-        </h2>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <Card>
-            <CardContent className="p-5">
+      {/* Only showing Forum Moderation and Website Assistant */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+        {/* Forum Moderation Card */}
+        <Card className="bg-white overflow-hidden rounded-xl shadow-md">
+          <CardContent className="p-0">
+            <div className="p-5">
+              <h3 className="text-lg font-semibold text-neutral-800 mb-2">Forum Moderation</h3>
+              <p className="text-sm text-neutral-600 mb-4">Review reported content, moderate discussions, and manage forum</p>
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg leading-6 font-medium text-neutral-900 dark:text-white">
-                    User Management
-                  </h3>
-                  <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                    Manage users, add new therapists and students, modify user information.
-                  </p>
+                <div className="bg-[#E7F4F3] rounded-full px-3 py-1 text-sm text-[#417772]">
+                  Review required
                 </div>
-                <Link href="/admin">
-                  <Button variant="outline" className="flex items-center">
-                    <Users className="mr-2 h-5 w-5" />
-                    Manage Users
-                  </Button>
-                </Link>
+                <MessageSquare className="h-10 w-10 text-[#417772]" />
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-5">
+            </div>
+            <div className="bg-[#FFF5E1] px-5 py-3 border-t border-[#F0EEEB]">
+              <Link href="/forums">
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-center bg-white hover:bg-[#F8F8F8] text-[#417772] font-medium rounded-full px-4 py-2 shadow-sm"
+                >
+                  Moderate Forums
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Website Assistant Card */}
+        <Card className="bg-white overflow-hidden rounded-xl shadow-md">
+          <CardContent className="p-0">
+            <div className="p-5">
+              <h3 className="text-lg font-semibold text-neutral-800 mb-2">Website Assistant</h3>
+              <p className="text-sm text-neutral-600 mb-4">Get help navigating the platform</p>
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg leading-6 font-medium text-neutral-900 dark:text-white">
-                    System Settings
-                  </h3>
-                  <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                    Manage application settings, user access, and system configuration.
-                  </p>
+                <div className="bg-[#E7F4F3] rounded-full px-3 py-1 text-sm text-[#417772]">
+                  Available 24/7
                 </div>
-                <Link href="/settings">
-                  <Button variant="outline" className="flex items-center">
-                    <Settings className="mr-2 h-5 w-5" />
-                    Configure
-                  </Button>
-                </Link>
+                <MessageSquare className="h-10 w-10 text-[#417772]" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+            <div className="bg-[#FFF5E1] px-5 py-3 border-t border-[#F0EEEB]">
+              <Link href="/chat">
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-center bg-white hover:bg-[#F8F8F8] text-[#417772] font-medium rounded-full px-4 py-2 shadow-sm"
+                >
+                  Start Chat
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
