@@ -83,6 +83,7 @@ export function ForumModeration() {
     refetch: refetchPosts
   } = useQuery<ExtendedForumPost[]>({
     queryKey: ["/api/admin/forum/reported"],
+    queryFn: () => apiRequest("GET", "/api/admin/forum/reported").then(res => res.json()),
     retry: 1,
   });
   
@@ -93,6 +94,7 @@ export function ForumModeration() {
     refetch: refetchComments
   } = useQuery<ExtendedForumComment[]>({
     queryKey: ["/api/admin/forum/reported-comments"],
+    queryFn: () => apiRequest("GET", "/api/admin/forum/reported-comments").then(res => res.json()),
     retry: 1,
   });
   
@@ -724,16 +726,14 @@ export function ForumModeration() {
               )}
             </div>
             
-            {selectedTab === "comments" && (
-              <Textarea
-                placeholder={adminAction === "delete" 
-                  ? "Optional: Add notes about why this is being deleted..." 
-                  : "Optional: Add notes about approving this content..."}
-                value={adminActionNote}
-                onChange={(e) => setAdminActionNote(e.target.value)}
-                className="min-h-[80px]"
-              />
-            )}
+            <Textarea
+              placeholder={adminAction === "delete" 
+                ? "Optional: Add notes about why this is being deleted..." 
+                : "Optional: Add notes about approving this content..."}
+              value={adminActionNote}
+              onChange={(e) => setAdminActionNote(e.target.value)}
+              className="min-h-[80px]"
+            />
           </div>
           
           <DialogFooter>
