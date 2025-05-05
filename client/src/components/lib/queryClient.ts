@@ -8,6 +8,8 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(method: string, url: string, body?: any) {
+  console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+
   return fetch(`${import.meta.env.VITE_API_URL}${url}`, {
     method,
     headers: {
