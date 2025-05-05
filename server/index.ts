@@ -1,6 +1,7 @@
 import express from "express";
 import { registerRoutes } from './routes';
 import { connectToMongoDB } from "./db";
+import { corsMiddleware } from "./cors";
 // import dotenv from "dotenv";
 
 // Load environment variables from .env file
@@ -13,6 +14,9 @@ async function main() {
     console.log("Connected to MongoDB");
 
     const app = express();
+    
+    // Enable CORS before any routes
+    app.use(corsMiddleware);
     
     // Parse JSON request body
     app.use(express.json());
