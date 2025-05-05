@@ -9,9 +9,9 @@ import { corsMiddleware } from "./cors";
 
 async function main() {
   try {
-    // Connect to MongoDB
+    console.log("[Startup] Connecting to MongoDB...");
     await connectToMongoDB();
-    console.log("Connected to MongoDB");
+    console.log("[Startup] Connected to MongoDB");
 
     const app = express();
     
@@ -21,17 +21,19 @@ async function main() {
     // Parse JSON request body
     app.use(express.json());
     
-    // Set up routes
+    console.log("[Startup] Registering routes...");
     const server = await registerRoutes(app);
+    console.log("[Startup] Routes registered");
     
     // Start the server
     const PORT = process.env.PORT || 5000;
+    console.log(`[Startup] Starting server on port ${PORT}`);
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
     
   } catch (error) {
-    console.error("Error starting server:", error);
+    console.error("[Startup] Error starting server:", error);
     process.exit(1);
   }
 }
