@@ -3,7 +3,8 @@ import cors from "cors";
 // Allow only your Vercel frontend domain in production
 const allowedOrigins = [
   process.env.FRONTEND_ORIGIN || "http://localhost:3000",
-  "https://cs-360-group-34-final-6nugbiuwr-danyaal-sadiqs-projects.vercel.app"
+  "https://cs-360-group-34-final-6nugbiuwr-danyaal-sadiqs-projects.vercel.app",
+  "https://cs360-group-34-production.up.railway.app"
 ];
 
 export const corsMiddleware = cors({
