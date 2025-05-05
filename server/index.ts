@@ -7,6 +7,8 @@ import { corsMiddleware } from "./cors";
 // Load environment variables from .env file
 // dotenv.config();
 
+console.log("[Startup] server/index.ts entrypoint loaded");
+
 async function main() {
   try {
     console.log("[Startup] Connecting to MongoDB...");
