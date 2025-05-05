@@ -22,6 +22,9 @@ export const apiRequest = async (
   data?: any,
   options: ApiRequestOptions = {}
 ): Promise<Response> => {
+  // Debug: log the backend base URL
+  console.log("[apiRequest] VITE_API_BASE_URL:", import.meta.env.VITE_API_BASE_URL);
+
   const headers = {
     "Content-Type": "application/json",
     ...options.headers,
@@ -40,6 +43,9 @@ export const apiRequest = async (
   // Use base URL from env in production, or relative path in dev
   const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
   const url = baseUrl && !path.startsWith("http") ? `${baseUrl.replace(/\/$/, "")}${path.startsWith("/") ? path : "/" + path}` : path;
+
+  // Debug: log the final URL used for the request
+  console.log(`[apiRequest] Final URL:`, url);
 
   const response = await fetch(url, config);
 
