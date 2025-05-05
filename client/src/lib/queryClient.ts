@@ -46,7 +46,7 @@ export const apiRequest = async (
 
   // Debug: log the final URL used for the request
   console.log(`[apiRequest] Final URL:`, url);
-
+  console.log("[env] VITE_API_BASE_URL =", import.meta.env.VITE_API_BASE_URL)
   const response = await fetch(url, config);
 
   if (!response.ok) {
