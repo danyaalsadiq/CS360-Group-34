@@ -83,6 +83,7 @@ export function ForumModeration() {
     refetch: refetchPosts
   } = useQuery<ExtendedForumPost[]>({
     queryKey: ["/api/admin/forum/reported"],
+    queryFn: () => apiRequest("GET", "/api/admin/forum/reported").then(res => res.json()),
     retry: 1,
   });
   
@@ -93,6 +94,7 @@ export function ForumModeration() {
     refetch: refetchComments
   } = useQuery<ExtendedForumComment[]>({
     queryKey: ["/api/admin/forum/reported-comments"],
+    queryFn: () => apiRequest("GET", "/api/admin/forum/reported-comments").then(res => res.json()),
     retry: 1,
   });
   

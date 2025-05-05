@@ -111,6 +111,7 @@ export function ForumList() {
     refetch: refetchPosts
   } = useQuery<ExtendedForumPost[]>({
     queryKey: ["/api/forum/posts"],
+    queryFn: () => apiRequest("GET", "/api/forum/posts").then(res => res.json()),
     enabled: !!user
   });
   

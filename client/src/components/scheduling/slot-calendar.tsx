@@ -132,7 +132,7 @@ export function SlotCalendar({
     },
     placeholderData: [],
     // Enable polling to get real-time updates every 10 seconds
-    refetchInterval: 10000,
+    refetchInterval: 30000,
     // Only poll when the component is visible
     refetchIntervalInBackground: false,
     // Refetch when window regains focus

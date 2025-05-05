@@ -22,6 +22,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import AdminAssignUsersForm from '@/components/scheduling/admin-assign-users-form';
 
 interface SlotSubmissionModalProps {
   isOpen: boolean;
@@ -114,8 +115,8 @@ export function SlotSubmissionModal({
       }
     },
     enabled: !!effectiveSlotData.id,
-    // Enable polling to get real-time updates every 5 seconds
-    refetchInterval: 5000,
+    // Enable polling to get real-time updates every 20 seconds (reduced from 5 to improve performance)
+    refetchInterval: 20000,
     // Only poll when the component is visible
     refetchIntervalInBackground: false,
     // Refetch when window regains focus
@@ -450,28 +451,17 @@ export function SlotSubmissionModal({
                   <span className="text-sm">{slotData.startTime} - {slotData.endTime}</span>
                 </div>
                 
-                {/* We'll implement drop-downs for therapist and student selection here */}
-                <div className="pt-2">
-                  <p className="text-sm text-muted-foreground">
-                    User assignment functionality will go here. You'll be able to select a therapist and student to assign to this slot.
-                  </p>
+                {/* Implement drop-downs for therapist and student selection */}
+                <div className="space-y-4 pt-2">
+                  <AdminAssignUsersForm 
+                    date={effectiveSlotData.date}
+                    startTime={effectiveSlotData.startTime}
+                    endTime={effectiveSlotData.endTime}
+                    slotId={slotDetails?._id?.toString() || effectiveSlotData.id}
+                    therapistId={slotDetails?.therapist_id}
+                    onClose={onClose}
+                  />
                 </div>
-              </div>
-              
-              <div className="pt-4 flex gap-2">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={onClose}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  className="flex-1"
-                  disabled={true}
-                >
-                  Assign Users
-                </Button>
               </div>
             </div>
           </TabsContent>
@@ -542,6 +532,25 @@ export function SlotSubmissionModal({
               onCancel={onClose}
               therapistId={slotDetails?.therapist_id}
               isWaitlisted={slotStatus === 'waitlisted'}
+            />
+          </div>
+        )}
+        
+        {isAdmin && (
+          <div className="pt-4">
+            <Alert className="mb-4 bg-amber-50 border-amber-200">
+              <Calendar className="h-4 w-4 text-amber-600 mr-2" />
+              <AlertDescription className="text-amber-700">
+                As an administrator, you can assign a student to this therapist's marked availability.
+              </AlertDescription>
+            </Alert>
+            <AdminAssignUsersForm
+              date={slotData.date}
+              startTime={slotData.startTime}
+              endTime={slotData.endTime}
+              slotId={slotDetails?._id?.toString()}
+              therapistId={slotDetails?.therapist_id}
+              onClose={onClose}
             />
           </div>
         )}

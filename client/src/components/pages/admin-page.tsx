@@ -113,37 +113,8 @@ const AdminPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-              <Card className="cursor-pointer hover:shadow-md transition-shadow bg-white" onClick={() => handleOptionClick('therapists')}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-xl font-semibold">Manage Therapists</CardTitle>
-                  <UserRound className="h-6 w-6 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-sm text-muted-foreground">
-                    View and manage therapist calendars, schedule appointments, and modify availability
-                  </CardDescription>
-                  <Button variant="default" className="w-full mt-4" onClick={() => handleOptionClick('therapists')}>
-                    Manage Therapists
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:shadow-md transition-shadow bg-white" onClick={() => handleOptionClick('students')}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-xl font-semibold">Manage Students</CardTitle>
-                  <User className="h-6 w-6 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-sm text-muted-foreground">
-                    View and manage student appointments, waitlists, and requests
-                  </CardDescription>
-                  <Button variant="default" className="w-full mt-4" onClick={() => handleOptionClick('students')}>
-                    Manage Students
-                  </Button>
-                </CardContent>
-              </Card>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+              {/* Forum Moderation Card */}
               <Card className="cursor-pointer hover:shadow-md transition-shadow bg-white" onClick={() => handleOptionClick('forum-moderation')}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xl font-semibold">Forum Moderation</CardTitle>
@@ -163,64 +134,25 @@ const AdminPage = () => {
                   </Button>
                 </CardContent>
               </Card>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-white">
-                <CardHeader>
-                  <CardTitle>System Statistics</CardTitle>
-                  <CardDescription>
-                    Overview of the system usage and statistics
-                  </CardDescription>
+              {/* Website Assistant Card - Added as requested */}
+              <Card className="cursor-pointer hover:shadow-md transition-shadow bg-white">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-xl font-semibold">Website Assistant</CardTitle>
+                  <UserRound className="h-6 w-6 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <User className="h-5 w-5 mr-2 text-muted-foreground" />
-                        <span>Total Users</span>
-                      </div>
-                      <span className="font-semibold">Loading...</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <CalendarDays className="h-5 w-5 mr-2 text-muted-foreground" />
-                        <span>Active Appointments</span>
-                      </div>
-                      <span className="font-semibold">Loading...</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <ListChecks className="h-5 w-5 mr-2 text-muted-foreground" />
-                        <span>Pending Requests</span>
-                      </div>
-                      <span className="font-semibold">Loading...</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white">
-                <CardHeader>
-                  <CardTitle>Admin Actions</CardTitle>
-                  <CardDescription>
-                    Quick actions for administrators
+                  <CardDescription className="text-sm text-muted-foreground">
+                    Get help navigating the platform with our website assistant
                   </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <Button variant="outline" className="w-full justify-start" disabled>
-                      <Shield className="mr-2 h-4 w-4" />
-                      Generate System Report
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start" disabled>
-                      <Settings className="mr-2 h-4 w-4" />
-                      System Settings
-                    </Button>
-                  </div>
+                  <Button variant="default" className="w-full mt-4" onClick={() => navigate('/chat')}>
+                    Start Chat
+                  </Button>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Removed System Statistics and Admin Actions cards */}
           </div>
         );
     }

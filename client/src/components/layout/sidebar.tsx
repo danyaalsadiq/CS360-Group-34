@@ -143,20 +143,6 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
                   onClick={closeMenuOnMobile}
                 />
                 <NavItem 
-                  href="/appointments" 
-                  icon={<Calendar />} 
-                  label="Appointments" 
-                  active={location.includes("/appointments")} 
-                  onClick={closeMenuOnMobile}
-                />
-                <NavItem 
-                  href="/feedback" 
-                  icon={<Star />} 
-                  label="Feedback" 
-                  active={location.includes("/feedback")} 
-                  onClick={closeMenuOnMobile}
-                />
-                <NavItem 
                   href="/schedule" 
                   icon={<Calendar />} 
                   label="Weekly Schedule" 
@@ -203,27 +189,6 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
                   icon={<Home />} 
                   label="Dashboard" 
                   active={location === "/"} 
-                  onClick={closeMenuOnMobile}
-                />
-                <NavItem 
-                  href="/appointments" 
-                  icon={<Calendar />} 
-                  label="Sessions" 
-                  active={location.includes("/appointments")} 
-                  onClick={closeMenuOnMobile}
-                />
-                <NavItem 
-                  href="/students" 
-                  icon={<User />} 
-                  label="Students" 
-                  active={location.includes("/students")} 
-                  onClick={closeMenuOnMobile}
-                />
-                <NavItem 
-                  href="/feedback" 
-                  icon={<Star />} 
-                  label="Students Feedback" 
-                  active={location.includes("/feedback")} 
                   onClick={closeMenuOnMobile}
                 />
                 <NavItem 
@@ -278,15 +243,8 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
                 <NavItem 
                   href="/schedule" 
                   icon={<Calendar />} 
-                  label="Scheduling" 
+                  label="Calendar Management" 
                   active={location.includes("/schedule")} 
-                  onClick={closeMenuOnMobile}
-                />
-                <NavItem 
-                  href="/feedback" 
-                  icon={<Star />} 
-                  label="Therapist Feedback" 
-                  active={location.includes("/feedback")} 
                   onClick={closeMenuOnMobile}
                 />
               </div>

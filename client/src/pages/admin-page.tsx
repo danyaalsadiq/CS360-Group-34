@@ -165,63 +165,7 @@ const AdminPage = () => {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-white">
-                <CardHeader>
-                  <CardTitle>System Statistics</CardTitle>
-                  <CardDescription>
-                    Overview of the system usage and statistics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <User className="h-5 w-5 mr-2 text-muted-foreground" />
-                        <span>Total Users</span>
-                      </div>
-                      <span className="font-semibold">Loading...</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <CalendarDays className="h-5 w-5 mr-2 text-muted-foreground" />
-                        <span>Active Appointments</span>
-                      </div>
-                      <span className="font-semibold">Loading...</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <ListChecks className="h-5 w-5 mr-2 text-muted-foreground" />
-                        <span>Pending Requests</span>
-                      </div>
-                      <span className="font-semibold">Loading...</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white">
-                <CardHeader>
-                  <CardTitle>Admin Actions</CardTitle>
-                  <CardDescription>
-                    Quick actions for administrators
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <Button variant="outline" className="w-full justify-start" disabled>
-                      <Shield className="mr-2 h-4 w-4" />
-                      Generate System Report
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start" disabled>
-                      <Settings className="mr-2 h-4 w-4" />
-                      System Settings
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
-          </div>
         );
     }
   };
