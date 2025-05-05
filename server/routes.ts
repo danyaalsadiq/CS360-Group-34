@@ -66,6 +66,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
   // User management endpoints
   app.get("/api/users", isAuthenticated, async (req, res) => {
+    console.log("TEST TEST TEST TEST")
     const role = req.query.role as string | undefined;
     const users = await storage.listUsers(role);
     

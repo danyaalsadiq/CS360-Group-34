@@ -37,7 +37,11 @@ export const apiRequest = async (
     config.body = JSON.stringify(data);
   }
 
-  const response = await fetch(path, config);
+  // Use base URL from env in production, or relative path in dev
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+  const url = baseUrl && !path.startsWith("http") ? `${baseUrl.replace(/\/$/, "")}${path.startsWith("/") ? path : "/" + path}` : path;
+
+  const response = await fetch(url, config);
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
