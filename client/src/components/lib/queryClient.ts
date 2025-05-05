@@ -18,7 +18,6 @@ export async function apiRequest(method: string, url: string, body?: any) {
   });
 }
 
-
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
