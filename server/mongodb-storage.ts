@@ -9,7 +9,7 @@ import {
   ForumComment, InsertForumComment,
   ChatMessage, InsertChatMessage,
   Resource, InsertResource
-} from "@shared/schema";
+} from "./schema";
 import {
   UserModel, AppointmentModel, FeedbackModel, GoalModel,
   ForumPostModel, ForumCommentModel, ChatMessageModel, ResourceModel,

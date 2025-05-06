@@ -7,7 +7,7 @@ import {
   forumComments, ForumComment, InsertForumComment,
   chatMessages, ChatMessage, InsertChatMessage,
   resources, Resource, InsertResource
-} from "@shared/schema";
+} from "./schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
