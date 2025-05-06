@@ -4,8 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch server/index.ts",
-    "build": "tsc --outDir dist",
-    "start": "node dist/server/index.js",
+    "start": "npx tsx watch index.ts",
     "lint": "eslint \"server/**/*.ts\" --fix",
     "test": "jest"
   },
