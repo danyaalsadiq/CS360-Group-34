@@ -2,7 +2,6 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-// import { insertAppointmentSchema, insertFeedbackSchema, insertForumPostSchema, insertForumCommentSchema, insertChatMessageSchema, insertResourceSchema } from "@shared/schema";
 import { insertAppointmentSchema, insertFeedbackSchema, insertForumPostSchema, insertForumCommentSchema, insertChatMessageSchema, insertResourceSchema } from "./schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
