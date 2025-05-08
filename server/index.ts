@@ -1,11 +1,12 @@
 import express from "express";
+import session from "express-session";
 import { registerRoutes } from './routes';
 import { connectToMongoDB } from "./db";
 import { corsMiddleware } from "./cors";
-// import dotenv from "dotenv";
+import dotenv from "dotenv";
 
 // Load environment variables from .env file
-// dotenv.config();
+dotenv.config();
 
 console.log("[Startup] server/index.ts entrypoint loaded");
 
@@ -23,6 +24,19 @@ async function main() {
     // Parse JSON request body
     app.use(express.json());
     
+    app.set('trust proxy', 1)
+
+    app.use(session({
+      secret: process.env.SESSION_SECRET!,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+        httpOnly: true
+      }
+    }));
+
     console.log("[Startup] Registering routes...");
     const server = await registerRoutes(app);
     console.log("[Startup] Routes registered");
