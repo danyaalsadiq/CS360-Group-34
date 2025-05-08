@@ -4,7 +4,7 @@ import cors from "cors";
 const allowedOrigins = [
   process.env.FRONTEND_ORIGIN || "http://localhost:3000",
   "https://cs-360-group-34-final-6nugbiuwr-danyaal-sadiqs-projects.vercel.app",
-  "https://cs360-group-34-production.up.railway.app"
+  "https://cs-360-group-34-final-deployment-cs1xmbgmm.vercel.app"
 ];
 
 export const corsMiddleware = cors({
