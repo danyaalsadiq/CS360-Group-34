@@ -1,24 +1,31 @@
 import express from "express";
 import { registerRoutes } from './routes';
 import { connectToMongoDB } from "./db";
+import { corsMiddleware } from "./cors";
 // import dotenv from "dotenv";
 
 // Load environment variables from .env file
 // dotenv.config();
 
+console.log("[Startup] server/index.ts entrypoint loaded");
+
 async function main() {
   try {
-    // Connect to MongoDB
+    console.log("[Startup] Connecting to MongoDB...");
     await connectToMongoDB();
-    console.log("Connected to MongoDB");
+    console.log("[Startup] Connected to MongoDB");
 
     const app = express();
+    
+    // Enable CORS before any routes
+    app.use(corsMiddleware);
     
     // Parse JSON request body
     app.use(express.json());
     
-    // Set up routes
+    console.log("[Startup] Registering routes...");
     const server = await registerRoutes(app);
+    console.log("[Startup] Routes registered");
     
     // Start the server
     const PORT = process.env.PORT || 5001;
@@ -27,7 +34,7 @@ async function main() {
     });
     
   } catch (error) {
-    console.error("Error starting server:", error);
+    console.error("[Startup] Error starting server:", error);
     process.exit(1);
   }
 }

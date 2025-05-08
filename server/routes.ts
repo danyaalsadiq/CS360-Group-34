@@ -25,6 +25,11 @@ import { NotificationModel } from './models/notification';
 import { ForumCommentModel, UserModel, FeedbackModel } from './models';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add a health check endpoint
+  app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // Set up authentication routes
   setupAuth(app);
 
@@ -66,6 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
   // User management endpoints
   app.get("/api/users", isAuthenticated, async (req, res) => {
+    console.log("TEST TEST TEST TEST")
     const role = req.query.role as string | undefined;
     const users = await storage.listUsers(role);
     

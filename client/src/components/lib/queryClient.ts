@@ -7,20 +7,17 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+export async function apiRequest(method: string, url: string, body?: any) {
+  console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
 
-  await throwIfResNotOk(res);
-  return res;
+  return fetch(`${import.meta.env.VITE_API_URL}${url}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: body ? JSON.stringify(body) : undefined,
+  });
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -29,7 +26,9 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const baseUrl = import.meta.env.VITE_API_URL || "";
+    const url = baseUrl + queryKey[0];
+    const res = await fetch(url, {
       credentials: "include",
     });
 
