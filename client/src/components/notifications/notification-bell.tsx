@@ -113,7 +113,8 @@ export function NotificationBell() {
     try {
       // Determine WebSocket protocol (ws or wss)
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const wsUrl =import.meta.env.VITE_WS_URL ||
+        `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws`;
       console.log(`Attempting to connect WebSocket to: ${wsUrl}`);
       
       // Create new WebSocket connection
