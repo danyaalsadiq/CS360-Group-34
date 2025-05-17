@@ -105,6 +105,7 @@ export function ForumList() {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   
   // Fetch forum posts
+  console.log("current user:", user)
   const { 
     data: allPosts = [], 
     isLoading: isLoadingPosts,
@@ -112,6 +113,9 @@ export function ForumList() {
   } = useQuery<ExtendedForumPost[]>({
     queryKey: ["/api/forum/posts"],
     queryFn: () => apiRequest("GET", "/api/forum/posts").then(res => res.json()),
+    onSuccess: posts => {
+      console.log("posts returned (roles):", posts.map(p => p.user?.role));
+    },
     enabled: !!user
   });
   
