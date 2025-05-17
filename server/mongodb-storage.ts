@@ -419,13 +419,25 @@ export class MongoDBStorage implements IStorage {
   }
 
   async listForumPosts(): Promise<ForumPost[]> {
-    try {
-      const posts = await ForumPostModel.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
-      return posts.map(post => toForumPost(post));
-    } catch (error) {
-      console.error("Error listing forum posts:", error);
-      return [];
-    }
+    const docs = await ForumPostModel.find().sort({ createdAt: -1 });
+    return Promise.all(
+      docs.map(async (doc) => {
+        const post = toForumPost(doc);
+        // now fetch the actual user record
+        const u = await UserModel.findById(post.userId).lean();
+        return {
+          ...post,
+          user: u
+            ? {
+                id: u._id.toString(),
+                name: u.name,
+                role: u.role,           
+                profileImage: u.profileImage,
+              }
+            : null,
+        };
+      })
+    );
   }
   
   async listForumPostsByCategory(category: string): Promise<ForumPost[]> {
