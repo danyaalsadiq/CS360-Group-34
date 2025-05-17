@@ -627,9 +627,9 @@ export function ForumList() {
                 </Button>
                 <Button 
                   type="submit"
-                  disabled={createPostMutation.isPending}
+                  disabled={createPostMutation.isLoading}>
                 >
-                  {createPostMutation.isPending ? "Creating..." : "Create Post"}
+                  {createPostMutation.isLoading ? "Creating..." : "Create Post"}
                 </Button>
               </DialogFooter>
             </form>
@@ -677,9 +677,9 @@ export function ForumList() {
             <Button 
               variant="destructive" 
               onClick={submitReport}
-              disabled={!reportReason.trim() || reportPostMutation.isPending}
+              disabled={!reportReason.trim() || reportPostMutation.isLoading}
             >
-              {reportPostMutation.isPending ? "Submitting..." : "Submit Report"}
+              {reportPostMutation.isLoading ? "Submitting..." : "Submit Report"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1109,7 +1109,7 @@ function CommentsSection({ postId }: CommentsSectionProps) {
                   </FormControl>
                   <Button 
                     type="submit"
-                    disabled={isPending || !field.value}
+                    disabled={createCommentMutation.isLoading || !field.value}
                     className="self-end"
                   >
                     Post
