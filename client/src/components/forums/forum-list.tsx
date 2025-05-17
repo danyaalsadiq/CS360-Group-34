@@ -142,36 +142,6 @@ export function ForumList() {
       });
     }
   });
-  
-  // Create new comment mutation
-  const createCommentMutation = useMutation({
-    mutationFn: async ({ 
-      postId, 
-      data 
-    }: { 
-      postId: string; 
-      data: z.infer<typeof commentFormSchema> 
-    }) => {
-      return apiRequest("POST", `/api/forum/posts/${postId}/comments`, data);
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: ["/api/forum/posts", variables.postId, "comments"] 
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/forum/posts"] });
-      toast({
-        title: "Comment added",
-        description: "Your comment has been added to the post.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to add comment",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
-      });
-    }
-  });
 
   // Like post mutation with optimistic updates
   const likePostMutation = useMutation({
@@ -548,9 +518,6 @@ export function ForumList() {
                   <div className="space-y-4">
                     <CommentsSection 
                       postId={post.id}
-                      form={commentForm}
-                      onSubmit={() => onCommentSubmit(post.id)}
-                      isPending={createCommentMutation.isPending}
                     />
                   </div>
                 </div>
@@ -725,9 +692,6 @@ export function ForumList() {
 
 interface CommentsSectionProps {
   postId: string;
-  form: any;
-  onSubmit: () => void;
-  isPending: boolean;
 }
 
 function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionProps) {
@@ -839,6 +803,27 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
     }
   });
   
+  const createCommentMutation = useMutation({
+  mutationFn: async (data: z.infer<typeof commentFormSchema>) => {
+    return apiRequest("POST", `/api/forum/posts/${postId}/comments`, data);
+  },
+  onSuccess: () => {
+    form.reset();
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ["/api/forum/posts"] }); // update commentCount
+    toast({
+      title: "Comment added",
+      description: "Your comment has been posted.",
+    });
+  },
+  onError: (error) => {
+    toast({
+      title: "Failed to add comment",
+      description: error instanceof Error ? error.message : "An unknown error occurred",
+      variant: "destructive",
+    });
+    }
+  });
   // Delete comment mutation
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: string) => {
@@ -1098,8 +1083,8 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
         <form 
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit(onSubmit)();
-          }} 
+            form.handleSubmit((data) => createCommentMutation.mutate(data))();
+          }}
           className="pt-4 border-t"
         >
           <FormField
