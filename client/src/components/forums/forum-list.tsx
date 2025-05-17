@@ -298,8 +298,12 @@ export function ForumList() {
   
   const onCommentSubmit = (postId: string) => {
     const data = commentForm.getValues();
-    createCommentMutation.mutate({ postId, data });
-    commentForm.reset();
+    createCommentMutation.mutate({ postId, data }, {
+      onSuccess: () => {
+        commentForm.reset();
+        refetch(); 
+      }
+    });
   };
 
   const handleLikePost = (postId: string) => {
