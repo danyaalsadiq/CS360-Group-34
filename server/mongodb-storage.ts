@@ -397,21 +397,35 @@ export class MongoDBStorage implements IStorage {
   }
 
   // Forum operations
-  async getForumPost(id: string | number): Promise<ForumPost | undefined> {
+  async getForumPost(id: string | number): Promise<(ForumPost & { user: User|null })|undefined> {
     try {
-      const post = await ForumPostModel.findById(id);
-      return post ? toForumPost(post) : undefined;
+      const doc = await ForumPostModel.findById(id).lean();
+      if (!doc) return undefined;
+      const post = toForumPost(doc);
+      const u = await UserModel.findById(post.userId).lean();
+      return {
+        ...post,
+        user: u
+          ? { id: u._id.toString(), name: u.name, role: u.role, profileImage: u.profileImage }
+          : null,
+      };
     } catch (error) {
       console.error("Error fetching forum post:", error);
       return undefined;
     }
   }
 
-  async createForumPost(post: InsertForumPost): Promise<ForumPost> {
+  async createForumPost(data: InsertForumPost): Promise<ForumPost & { user: User|null }> {
     try {
-      const newPost = new ForumPostModel(post);
-      const savedPost = await newPost.save();
-      return toForumPost(savedPost);
+      const saved = await new ForumPostModel(data).save();
+      const post = toForumPost(saved);
+      const u = await UserModel.findById(post.userId).lean();
+      return {
+        ...post,
+        user: u
+          ? { id: u._id.toString(), name: u.name, role: u.role, profileImage: u.profileImage }
+          : null,
+      };
     } catch (error) {
       console.error("Error creating forum post:", error);
       throw error;
@@ -440,27 +454,42 @@ export class MongoDBStorage implements IStorage {
     );
   }
   
-  async listForumPostsByCategory(category: string): Promise<ForumPost[]> {
+  async listForumPostsByCategory(category: string): Promise<(ForumPost & { user: User|null })[]> {
     try {
-      const posts = await ForumPostModel.find({ 
-        category, 
-        isDeleted: { $ne: true } 
-      }).sort({ createdAt: -1 });
-      return posts.map(post => toForumPost(post));
+      const docs = await ForumPostModel
+        .find({ category, isDeleted: { $ne: true } })
+        .sort({ createdAt: -1 })
+        .lean();
+      return Promise.all(docs.map(async doc => {
+        const post = toForumPost(doc);
+        const u = await UserModel.findById(post.userId).lean();
+        return {
+          ...post,
+          user: u
+            ? { id: u._id.toString(), name: u.name, role: u.role, profileImage: u.profileImage }
+            : null,
+        };
+      }));
     } catch (error) {
       console.error("Error listing forum posts by category:", error);
       return [];
     }
   }
   
-  async updateForumPost(id: string, postData: Partial<ForumPost>): Promise<ForumPost | undefined> {
+  async updateForumPost(id: string, postData: Partial<ForumPost>): Promise<(ForumPost & { user: User|null })|undefined> {
     try {
-      const updatedPost = await ForumPostModel.findByIdAndUpdate(
-        id, 
-        { ...postData, updatedAt: new Date() }, 
-        { new: true }
-      );
-      return updatedPost ? toForumPost(updatedPost) : undefined;
+      const updated = await ForumPostModel
+        .findByIdAndUpdate(id, { ...postData, updatedAt: new Date() }, { new: true })
+        .lean();
+      if (!updated) return undefined;
+      const post = toForumPost(updated);
+      const u = await UserModel.findById(post.userId).lean();
+      return {
+        ...post,
+        user: u
+          ? { id: u._id.toString(), name: u.name, role: u.role, profileImage: u.profileImage }
+          : null,
+      };
     } catch (error) {
       console.error("Error updating forum post:", error);
       return undefined;
@@ -481,62 +510,90 @@ export class MongoDBStorage implements IStorage {
     }
   }
   
-  async likeForumPost(postId: string, userId: string): Promise<ForumPost | undefined> {
+  async likeForumPost(postId: string, userId: string): Promise<(ForumPost & { user: User|null })|undefined> {
     try {
-      const post = await ForumPostModel.findById(postId);
-      if (!post) return undefined;
-      
-      // If user already liked, remove like (toggle)
-      if (post.likes && post.likes.includes(userId)) {
-        post.likes = post.likes.filter(id => id !== userId);
-      } else {
-        // Add like
-        if (!post.likes) post.likes = [];
-        post.likes.push(userId);
-      }
-      
-      post.updatedAt = new Date();
-      await post.save();
-      return toForumPost(post);
+      const postDoc = await ForumPostModel.findById(postId);
+      if (!postDoc) return undefined;
+
+      const has = postDoc.likes?.includes(userId);
+      postDoc.likes = has
+        ? postDoc.likes.filter(id => id !== userId)
+        : [...(postDoc.likes||[]), userId];
+      postDoc.updatedAt = new Date();
+      await postDoc.save();
+
+      const post = toForumPost(postDoc);
+      const u = await UserModel.findById(post.userId).lean();
+      return {
+        ...post,
+        user: u
+          ? { id: u._id.toString(), name: u.name, role: u.role, profileImage: u.profileImage }
+          : null,
+      };
     } catch (error) {
-      console.error("Error liking forum post:", error);
+      console.error("Error toggling like on forum post:", error);
       return undefined;
     }
   }
   
-  async reportForumPost(postId: string, userId: string, reason: string): Promise<ForumPost | undefined> {
+  async reportForumPost(postId: string, userId: string, reason: string): Promise<(ForumPost & { user: User|null })|undefined> {
     try {
-      const post = await ForumPostModel.findById(postId);
-      if (!post) return undefined;
-      
-      post.isReported = true;
-      post.reportReason = reason;
-      post.reportedBy = userId;
-      post.updatedAt = new Date();
-      
-      await post.save();
-      return toForumPost(post);
+      const postDoc = await ForumPostModel.findById(postId);
+      if (!postDoc) return undefined;
+
+      postDoc.isReported   = true;
+      postDoc.reportReason = reason;
+      postDoc.reportedBy   = userId;
+      postDoc.updatedAt    = new Date();
+      await postDoc.save();
+
+      const post = toForumPost(postDoc);
+      const u = await UserModel.findById(post.userId).lean();
+      return {
+        ...post,
+        user: u
+          ? { id: u._id.toString(), name: u.name, role: u.role, profileImage: u.profileImage }
+          : null,
+      };
     } catch (error) {
       console.error("Error reporting forum post:", error);
       return undefined;
     }
   }
 
-  async createForumComment(comment: InsertForumComment): Promise<ForumComment> {
+  async createForumComment(data: InsertForumComment): Promise<ForumComment & { user: User|null }> {
     try {
-      const newComment = new ForumCommentModel(comment);
-      const savedComment = await newComment.save();
-      return toForumComment(savedComment);
+      const saved = await new ForumCommentModel(data).save();
+      const comment = toForumComment(saved);
+      const u = await UserModel.findById(comment.userId).lean();
+      return {
+        ...comment,
+        user: u
+          ? { id: u._id.toString(), name: u.name, role: u.role, profileImage: u.profileImage }
+          : null,
+      };
     } catch (error) {
       console.error("Error creating forum comment:", error);
       throw error;
     }
   }
 
-  async listCommentsByPost(postId: string | number): Promise<ForumComment[]> {
+  async listCommentsByPost(postId: string | number): Promise<(ForumComment & { user: User|null })[]> {
     try {
-      const comments = await ForumCommentModel.find({ postId }).sort({ createdAt: 1 });
-      return comments.map(comment => toForumComment(comment));
+      const docs = await ForumCommentModel
+        .find({ postId })
+        .sort({ createdAt: 1 })
+        .lean();
+      return Promise.all(docs.map(async doc => {
+        const comment = toForumComment(doc);
+        const u = await UserModel.findById(comment.userId).lean();
+        return {
+          ...comment,
+          user: u
+            ? { id: u._id.toString(), name: u.name, role: u.role, profileImage: u.profileImage }
+            : null,
+        };
+      }));
     } catch (error) {
       console.error("Error listing comments by post:", error);
       return [];
