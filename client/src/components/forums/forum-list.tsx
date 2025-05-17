@@ -693,247 +693,125 @@ interface CommentsSectionProps {
   postId: string;
 }
 
-function CommentsSection({ postId }: CommentsSectionProps) {
+export function CommentsSection({ postId }: CommentsSectionProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [comments, setComments] = useState<ExtendedForumComment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [commentToReport, setCommentToReport] = useState<ExtendedForumComment | null>(null);
   const [reportReason, setReportReason] = useState("");
-  
+
   const form = useForm<z.infer<typeof commentFormSchema>>({
-  resolver: zodResolver(commentFormSchema),
-  defaultValues: {
-    content: "",
-    isAnonymous: false
-  }
+    resolver: zodResolver(commentFormSchema),
+    defaultValues: {
+      content: "",
+      isAnonymous: false
+    }
   });
-  // Fetch comments for this post
-  const { refetch } = useQuery<ExtendedForumComment[]>({
+
+  const {
+    data: comments = [],
+    isLoading,
+    refetch
+  } = useQuery<ExtendedForumComment[]>({
     queryKey: ["/api/forum/posts", postId, "comments"],
-    queryFn: async () => {
-      const response = await fetch(`/api/forum/posts/${postId}/comments`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch comments');
-      }
-      return response.json();
-    },
+    queryFn: () =>
+      apiRequest("GET", `/api/forum/posts/${postId}/comments`, undefined, {
+        cache: "no-store"
+      }).then((res) => res.json()),
     staleTime: 0,
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 5000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     retry: 3
   });
-  
-  // Handle data changes with useEffect instead of query callbacks
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // use apiRequest so VITE_API_BASE_URL is applied,
-        // and disable caching to avoid 304
-        const res = await apiRequest("GET", `/api/forum/posts/${postId}/comments`, undefined, {
-          // this option will end up in fetch config: { cache: "no-store" }
-          cache: "no-store"
-        });
-        if (!res.ok) {
-          throw new Error(`Server returned ${res.status}`);
-        }
-        const data: ExtendedForumComment[] = await res.json();
-        setComments(data);
-      } catch (error) {
-        console.error("Error loading comments:", error);
-        toast({
-          title: "Error loading comments",
-          description: "There was a problem loading comments. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [postId, toast]);
-  
-  // Like comment mutation with optimistic updates
-  const likeCommentMutation = useMutation({
-    mutationFn: async (commentId: string) => {
-      return apiRequest("POST", `/api/forum/comments/${commentId}/like`);
-    },
-    onMutate: async (commentId) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["/api/forum/posts", postId, "comments"] });
-      
-      // Snapshot the previous value
-      const previousComments = [...comments];
-      
-      // Optimistically update to the new value
-      const updatedComments = comments.map(comment => {
-        if (comment.id === commentId) {
-          // Toggle the like status
-          const hasLiked = !comment.hasLiked;
-          const likesCount = hasLiked
-            ? [...comment.likes, user!.id.toString()]
-            : comment.likes.filter(id => id !== user!.id.toString());
-          
-          return {
-            ...comment,
-            hasLiked,
-            likes: likesCount
-          };
-        }
-        return comment;
+
+  const createCommentMutation = useMutation({
+    mutationFn: (data: z.infer<typeof commentFormSchema>) =>
+      apiRequest("POST", `/api/forum/posts/${postId}/comments`, data),
+    onSuccess: async () => {
+      form.reset();
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ["/api/forum/posts"] });
+      toast({
+        title: "Comment added",
+        description: "Your comment has been posted."
       });
-      
-      setComments(updatedComments);
-      
-      return { previousComments };
     },
-    onError: (error, _, context) => {
-      // If the mutation fails, roll back
-      if (context?.previousComments) {
-        setComments(context.previousComments);
-      }
-      
+    onError: (error) => {
+      toast({
+        title: "Failed to add comment",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const likeCommentMutation = useMutation({
+    mutationFn: (commentId: string) =>
+      apiRequest("POST", `/api/forum/comments/${commentId}/like`),
+    onSettled: () => {
+      refetch();
+    },
+    onError: (error) => {
       toast({
         title: "Failed to like comment",
         description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
+        variant: "destructive"
       });
-    },
-    onSettled: () => {
-      // Always refetch to make sure we're in sync with server
-      refetch();
     }
   });
-  
-  const createCommentMutation = useMutation({
-  mutationFn: async (data: z.infer<typeof commentFormSchema>) => {
-    return apiRequest("POST", `/api/forum/posts/${postId}/comments`, data);
-  },
-  onSuccess: () => {
-    form.reset();
-    refetch();
-    queryClient.invalidateQueries({ queryKey: ["/api/forum/posts"] }); // update commentCount
-    toast({
-      title: "Comment added",
-      description: "Your comment has been posted.",
-    });
-  },
-  onError: (error) => {
-    toast({
-      title: "Failed to add comment",
-      description: error instanceof Error ? error.message : "An unknown error occurred",
-      variant: "destructive",
-    });
-    }
-  });
-  // Delete comment mutation
+
   const deleteCommentMutation = useMutation({
-    mutationFn: async (commentId: string) => {
-      return apiRequest("DELETE", `/api/forum/comments/${commentId}`);
-    },
-    onMutate: async (commentId) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["/api/forum/posts", postId, "comments"] });
-      
-      // Snapshot the previous value
-      const previousComments = [...comments];
-      
-      // Optimistically update by removing the comment
-      const updatedComments = comments.filter(comment => comment.id !== commentId);
-      setComments(updatedComments);
-      
-      return { previousComments };
-    },
-    onError: (error, _, context) => {
-      // If the mutation fails, roll back
-      if (context?.previousComments) {
-        setComments(context.previousComments);
-      }
-      
-      toast({
-        title: "Failed to delete comment",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
-      });
-    },
+    mutationFn: (commentId: string) =>
+      apiRequest("DELETE", `/api/forum/comments/${commentId}`),
     onSuccess: () => {
       toast({
         title: "Comment deleted",
-        description: "Your comment has been deleted successfully.",
+        description: "Your comment has been deleted successfully."
       });
-      
-      // Also update post comment count
       queryClient.invalidateQueries({ queryKey: ["/api/forum/posts"] });
     },
     onSettled: () => {
-      // Always refetch to make sure we're in sync with server
       refetch();
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete comment",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
+      });
     }
   });
-  
-  // Report comment mutation
+
   const reportCommentMutation = useMutation({
-    mutationFn: async ({ commentId, reason }: { commentId: string; reason: string }) => {
-      return apiRequest("POST", `/api/forum/comments/${commentId}/report`, { reason });
-    },
+    mutationFn: ({ commentId, reason }: { commentId: string; reason: string }) =>
+      apiRequest("POST", `/api/forum/comments/${commentId}/report`, { reason }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/forum/posts", postId, "comments"] });
       setIsReportModalOpen(false);
       setCommentToReport(null);
       setReportReason("");
       toast({
         title: "Comment reported",
-        description: "Thank you for reporting this content. Admins will review it shortly.",
+        description: "Thank you for reporting. Admins will review it shortly."
       });
     },
     onError: (error) => {
       toast({
         title: "Failed to report comment",
         description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   });
 
-  const handleLikeComment = (commentId: string) => {
-    likeCommentMutation.mutate(commentId);
+  const handleSubmit = (data: z.infer<typeof commentFormSchema>) => {
+    createCommentMutation.mutate(data);
   };
-  
-  const handleDeleteComment = (commentId: string) => {
-    if (window.confirm("Are you sure you want to delete this comment? This action cannot be undone.")) {
-      deleteCommentMutation.mutate(commentId);
-    }
-  };
-  
-  const handleReportComment = (comment: ExtendedForumComment) => {
-    setCommentToReport(comment);
-    setIsReportModalOpen(true);
-  };
-  
-  const submitCommentReport = () => {
-    if (!commentToReport || !reportReason.trim()) {
-      toast({
-        title: "Unable to submit report",
-        description: "Please provide a reason for reporting this content.",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    reportCommentMutation.mutate({
-      commentId: commentToReport.id,
-      reason: reportReason
-    });
-  };
-  
   return (
     <div className="space-y-4">
       <h3 className="font-medium text-lg">Comments</h3>
-      
+
       {isLoading ? (
         <div className="py-4 text-center">
           <p>Loading comments...</p>
@@ -947,151 +825,93 @@ function CommentsSection({ postId }: CommentsSectionProps) {
         <div className="space-y-4">
           {comments.map((comment) => {
             if (comment.isDeleted) {
-              // For deleted comments, show a simple non-interactive indicator
               return (
                 <div key={comment.id} className="ml-8 bg-muted/20 p-3 rounded-lg border border-muted">
                   <p className="text-sm text-muted-foreground italic">{comment.content}</p>
                 </div>
               );
             }
-            
-            // For normal comments, show the full interactive component
+
             return (
               <div key={comment.id} className="flex space-x-3">
-                {comment.user ? (
-                  <>
-                    {comment.user.profileImage ? (
-                      <img 
-                        src={comment.user.profileImage} 
-                        alt={comment.user.name}
-                        className="w-8 h-8 rounded-full"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-xs font-medium text-primary">
-                          {comment.user.name.charAt(0)}
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <div className="bg-muted p-3 rounded-lg">
-                        <div className="flex items-center mb-1">
-                          <span className="font-medium text-sm">
-                            {comment.user.name}
-                          </span>
+                <div>
+                  {comment.user?.profileImage ? (
+                    <img
+                      src={comment.user.profileImage}
+                      alt={comment.user.name}
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-xs font-medium text-primary">
+                        {comment.user?.name?.charAt(0) || <User className="h-4 w-4" />}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div className="bg-muted p-3 rounded-lg">
+                    <div className="flex items-center mb-1">
+                      <span className="font-medium text-sm">
+                        {comment.isAnonymous || !comment.user ? "Anonymous User" : comment.user.name}
+                      </span>
+                      {comment.user && (
+                        <>
                           <span className="mx-1.5 text-xs text-muted-foreground">•</span>
                           <span className="text-xs text-muted-foreground capitalize">
                             {comment.user.role}
                           </span>
-                        </div>
-                        <p className="text-sm">{comment.content}</p>
-                      </div>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(comment.createdAt), 'MMM d, yyyy • h:mm a')}
-                        </p>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleLikeComment(comment.id)}
-                            className={`h-6 px-2 ${comment.hasLiked ? "text-primary" : "text-muted-foreground"}`}
-                          >
-                            <Heart className={`h-3.5 w-3.5 mr-1 ${comment.hasLiked ? "fill-primary" : ""}`} />
-                            <span className="text-xs">{comment.likes?.length || 0}</span>
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleReportComment(comment)}
-                            className="h-6 px-2 text-muted-foreground hover:text-destructive"
-                          >
-                            <Flag className="h-3.5 w-3.5" />
-                          </Button>
-                        
-                          {(user?.role === "admin" || (comment.user && user && comment.user.id.toString() === user.id.toString())) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteComment(comment.id)}
-                              className="h-6 px-2 text-muted-foreground hover:text-destructive"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
+                        </>
+                      )}
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
-                      <User className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                    </div>
-                    <div>
-                      <div className="bg-muted p-3 rounded-lg">
-                        <div className="flex items-center mb-1">
-                          <span className="font-medium text-sm">
-                            Anonymous User
-                          </span>
-                        </div>
-                        <p className="text-sm">{comment.content}</p>
-                      </div>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(comment.createdAt), 'MMM d, yyyy • h:mm a')}
-                        </p>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleLikeComment(comment.id)}
-                            className={`h-6 px-2 ${comment.hasLiked ? "text-primary" : "text-muted-foreground"}`}
-                          >
-                            <Heart className={`h-3.5 w-3.5 mr-1 ${comment.hasLiked ? "fill-primary" : ""}`} />
-                            <span className="text-xs">{comment.likes?.length || 0}</span>
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleReportComment(comment)}
-                            className="h-6 px-2 text-muted-foreground hover:text-destructive"
-                          >
-                            <Flag className="h-3.5 w-3.5" />
-                          </Button>
-                          
-                          {user?.role === "admin" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteComment(comment.id)}
-                              className="h-6 px-2 text-muted-foreground hover:text-destructive"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
+                    <p className="text-sm">{comment.content}</p>
+                  </div>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(comment.createdAt), "MMM d, yyyy • h:mm a")}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => likeCommentMutation.mutate(comment.id)}
+                      className={`h-6 px-2 ${comment.hasLiked ? "text-primary" : "text-muted-foreground"}`}
+                    >
+                      <Heart className={`h-3.5 w-3.5 mr-1 ${comment.hasLiked ? "fill-primary" : ""}`} />
+                      <span className="text-xs">{comment.likes?.length || 0}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setCommentToReport(comment);
+                        setIsReportModalOpen(true);
+                      }}
+                      className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                    >
+                      <Flag className="h-3.5 w-3.5" />
+                    </Button>
+                    {(user?.role === "admin" || (comment.user && user?.id === comment.user.id)) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteCommentMutation.mutate(comment.id)}
+                        className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
             );
           })}
         </div>
       )}
-      
+
       <Form {...form}>
-        <form 
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit((data) => createCommentMutation.mutate(data))();
-          }}
-          className="pt-4 border-t"
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="pt-4 border-t space-y-2"
         >
           <FormField
             control={form.control}
@@ -1100,13 +920,13 @@ function CommentsSection({ postId }: CommentsSectionProps) {
               <FormItem>
                 <div className="flex gap-2">
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="Write a comment..."
                       className="min-h-[60px] resize-none flex-1"
                       {...field}
                     />
                   </FormControl>
-                  <Button 
+                  <Button
                     type="submit"
                     disabled={createCommentMutation.isLoading || !field.value}
                     className="self-end"
@@ -1118,7 +938,7 @@ function CommentsSection({ postId }: CommentsSectionProps) {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="isAnonymous"
@@ -1138,23 +958,20 @@ function CommentsSection({ postId }: CommentsSectionProps) {
           />
         </form>
       </Form>
-      
-      {/* Report Comment Modal */}
+
       <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Report Comment</DialogTitle>
             <DialogDescription>
-              Please provide a reason for reporting this comment. This will be reviewed by administrators.
+              Please explain why you're reporting this comment.
             </DialogDescription>
           </DialogHeader>
-          
           <div className="space-y-4 py-2">
             <div className="bg-muted p-3 rounded-lg">
               <p className="text-sm font-medium mb-1">Comment content:</p>
               <p className="text-sm">{commentToReport?.content}</p>
             </div>
-            
             <Textarea
               placeholder="Reason for reporting..."
               value={reportReason}
@@ -1162,11 +979,19 @@ function CommentsSection({ postId }: CommentsSectionProps) {
               className="w-full min-h-[100px]"
             />
           </div>
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsReportModalOpen(false)}>Cancel</Button>
-            <Button 
-              onClick={submitCommentReport}
+            <Button variant="outline" onClick={() => setIsReportModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (commentToReport && reportReason.trim()) {
+                  reportCommentMutation.mutate({
+                    commentId: commentToReport.id,
+                    reason: reportReason
+                  });
+                }
+              }}
               disabled={!reportReason.trim()}
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
