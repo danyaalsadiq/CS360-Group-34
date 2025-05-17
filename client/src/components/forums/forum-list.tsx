@@ -755,23 +755,28 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
   // Handle data changes with useEffect instead of query callbacks
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const response = await fetch(`/api/forum/posts/${postId}/comments`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch comments');
+        // use apiRequest so VITE_API_BASE_URL is applied,
+        // and disable caching to avoid 304
+        const res = await apiRequest("GET", `/api/forum/posts/${postId}/comments`, undefined, {
+          // this option will end up in fetch config: { cache: "no-store" }
+          cache: "no-store"
+        });
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status}`);
         }
-        const data = await response.json();
-        console.log("Comments loaded successfully:", data);
-        setComments(data || []);
-        setIsLoading(false);
+        const data: ExtendedForumComment[] = await res.json();
+        setComments(data);
       } catch (error) {
         console.error("Error loading comments:", error);
-        setIsLoading(false);
         toast({
           title: "Error loading comments",
           description: "There was a problem loading comments. Please try again.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -875,10 +880,6 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
     }
   });
   
-  const handleLikeComment = (commentId: string) => {
-    likeCommentMutation.mutate(commentId);
-  };
-  
   // Report comment mutation
   const reportCommentMutation = useMutation({
     mutationFn: async ({ commentId, reason }: { commentId: string; reason: string }) => {
@@ -903,6 +904,10 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
     }
   });
 
+  const handleLikeComment = (commentId: string) => {
+    likeCommentMutation.mutate(commentId);
+  };
+  
   const handleDeleteComment = (commentId: string) => {
     if (window.confirm("Are you sure you want to delete this comment? This action cannot be undone.")) {
       deleteCommentMutation.mutate(commentId);
