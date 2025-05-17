@@ -731,7 +731,6 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
     onSuccess: async () => {
       form.reset();
       await refetch();
-      queryClient.invalidateQueries({ queryKey: ["/api/forum/posts"] });
       toast({
         title: "Comment added",
         description: "Your comment has been posted."
