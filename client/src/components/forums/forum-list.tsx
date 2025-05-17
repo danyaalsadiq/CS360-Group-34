@@ -628,7 +628,6 @@ export function ForumList() {
                 <Button 
                   type="submit"
                   disabled={createPostMutation.isLoading}>
-                >
                   {createPostMutation.isLoading ? "Creating..." : "Create Post"}
                 </Button>
               </DialogFooter>
