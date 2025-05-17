@@ -694,7 +694,7 @@ interface CommentsSectionProps {
   postId: string;
 }
 
-function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionProps) {
+function CommentsSection({ postId }: CommentsSectionProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [comments, setComments] = useState<ExtendedForumComment[]>([]);
@@ -703,6 +703,13 @@ function CommentsSection({ postId, form, onSubmit, isPending }: CommentsSectionP
   const [commentToReport, setCommentToReport] = useState<ExtendedForumComment | null>(null);
   const [reportReason, setReportReason] = useState("");
   
+  const form = useForm<z.infer<typeof commentFormSchema>>({
+  resolver: zodResolver(commentFormSchema),
+  defaultValues: {
+    content: "",
+    isAnonymous: false
+  }
+  });
   // Fetch comments for this post
   const { refetch } = useQuery<ExtendedForumComment[]>({
     queryKey: ["/api/forum/posts", postId, "comments"],
