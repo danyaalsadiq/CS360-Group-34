@@ -1,0 +1,14 @@
+{
+  "student": {
+    "username": "student1234",
+    "password": "123123"
+  },
+  "therapist": {
+    "username": "therapist1o",
+    "password": "therapist1"
+  },
+  "admin": {
+    "username": "admin",
+    "password": "admin1"
+  }
+}

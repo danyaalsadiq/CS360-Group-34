@@ -1,0 +1,38 @@
+{
+  "posts": [
+    {
+      "title": "Coping with Exam Anxiety",
+      "content": "I've been struggling with anxiety before exams. Any tips on how to manage this effectively?",
+      "category": "Stress Management"
+    },
+    {
+      "title": "Self-Care Routines for Students",
+      "content": "What are some effective self-care routines that fit into a busy student schedule?",
+      "category": "Self-Care"
+    },
+    {
+      "title": "Managing Time Between Studies and Mental Health",
+      "content": "How do you balance academic responsibilities with taking care of your mental health?",
+      "category": "Academic Support"
+    }
+  ],
+  "comments": [
+    "I found deep breathing exercises really helpful before exams. Try the 4-7-8 technique!",
+    "Regular exercise has been a game-changer for my anxiety levels. Even just a 20-minute walk helps.",
+    "I've started setting aside 30 minutes each morning for meditation and it's made a huge difference.",
+    "Have you tried talking to your professor about accommodations? Many are understanding about anxiety."
+  ],
+  "reportReasons": [
+    "This post contains inappropriate content",
+    "This post is spam",
+    "This post is offensive or harmful"
+  ],
+  "categories": [
+    "Stress Management",
+    "Self-Care",
+    "Academic Support",
+    "Relationships",
+    "Mental Health Resources",
+    "General Discussion"
+  ]
+}
